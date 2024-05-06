@@ -60,22 +60,6 @@ const OrderForm = () => {
     setTotalAmount(tempTotalAmount);
     setDisableSubmit(true);
 
-    console.log('----------------');
-    console.log('name:', name);
-    console.log('phone:', phone);
-    console.log('gst:', gst);
-    console.log('code:', code);
-    console.log('address:', address);
-    console.log('particular:', particular);
-    console.log('book:', book);
-    console.log('rate:', rate);
-    console.log('count:',count);
-    console.log('noOfCopies:', noOfCopies);
-    console.log('totalAmount:', totalAmount);
-
-    const newObj = {name,phone,gst,code,address,particular,book,rate,count,tempNoOfCopies,tempTotalAmount}
-    console.log(newObj);
-
     await axios({
       method: 'post',
       url: '/create',
@@ -197,19 +181,6 @@ const OrderForm = () => {
     );
     formArray.push(dummmyFormArray);
   }
-
-  console.log('----------------');
-  console.log('name:', name);
-  console.log('phone:', phone);
-  console.log('gst:', gst);
-  console.log('code:', code);
-  console.log('address:', address);
-  console.log('particular:', particular);
-  console.log('book:', book);
-  console.log('rate:', rate);
-  console.log('count:',count);
-  console.log('noOfCopies:', noOfCopies);
-  console.log('totalAmount:', totalAmount);
 
   let statusDiv;
 
