@@ -1,6 +1,11 @@
 import * as React from "react";
+import axios from 'axios';
+import { Navigate } from 'react-router-dom';
+
+axios.defaults.baseURL = 'http://localhost:5001';
 
 const OrderForm = () => {
+  const saved = localStorage.getItem("login");
   const [name, setName] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [gst, setGst] = React.useState("");
@@ -16,6 +21,7 @@ const OrderForm = () => {
 
   const [noOfCopies, setNoOfCopies] = React.useState(0);
   const [totalAmount, setTotalAmount] = React.useState(0);
+  const [status, setStatus] = React.useState('');
 
   const updateParticularAtIndex = (index, newElement) => {
     const newArray = [...particular];
@@ -40,7 +46,7 @@ const OrderForm = () => {
     setCount((prevCounter) => prevCounter + 1)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     let tempNoOfCopies = 0;
     let tempTotalAmount = 0;
@@ -69,6 +75,62 @@ const OrderForm = () => {
 
     const newObj = {name,phone,gst,code,address,particular,book,rate,count,tempNoOfCopies,tempTotalAmount}
     console.log(newObj);
+
+    await axios({
+      method: 'post',
+      url: '/create',
+      data: {
+          name ,
+          phone ,
+          gst ,
+          code ,
+          address ,
+          particular1: particular[0] ,
+          book1:  book[0],
+          rate1: rate[0],
+          particular2: particular[1] ,
+          book2:  book[1],
+          rate2: rate[1],
+          particular3: particular[2] ,
+          book3:  book[2],
+          rate3: rate[2],
+          particular4: particular[3] ,
+          book4:  book[3],
+          rate4: rate[3],
+          particular5: particular[4] ,
+          book5:  book[4],
+          rate5: rate[4],
+          particular6: particular[5] ,
+          book6:  book[5],
+          rate6: rate[5],
+          particular7: particular[6] ,
+          book7:  book[6],
+          rate7: rate[6],
+          particular8: particular[7] ,
+          book8:  book[7],
+          rate8: rate[7],
+          particular9: particular[8] ,
+          book9:  book[8],
+          rate9: rate[8],
+          count,
+          noOfCopies: tempNoOfCopies,
+          totalamt: tempTotalAmount,
+          pendingamt: tempTotalAmount,
+          paid: '',
+          paymentId: '',
+          paymentStatus: '',
+          paymentRef: ''
+      }
+  })
+      .then(function (response) {
+          if (response.status === 200){ 
+          setStatus('success');
+          } else {
+            setStatus('warn')
+          }
+      }).catch(function (error) {
+          setStatus('error')
+      });
   }
 
 
@@ -149,8 +211,46 @@ const OrderForm = () => {
   console.log('noOfCopies:', noOfCopies);
   console.log('totalAmount:', totalAmount);
 
-  return (
+  let statusDiv;
+
+  if(status === 'success') {
+      statusDiv =   <div className="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800" role="alert">
+      <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+      </svg>
+      <span className="sr-only">Info</span>
+      <div>
+        <span className="font-medium">Order Created Successfully</span> Please click new order for new order creation.
+      </div>
+    </div>
+  }
+
+  if(status === 'warn') {
+    statusDiv =   <div className="flex items-center p-4 mb-4 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800" role="alert">
+    <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+    </svg>
+    <span className="sr-only">Info</span>
     <div>
+      <span className="font-medium">Order Creation have some issue!</span> Please connect with technical team.
+    </div>
+  </div>
+}
+
+if(status === 'error') {
+  statusDiv = <div className="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800" role="alert">
+  <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+  </svg>
+  <span className="sr-only">Info</span>
+  <div>
+    <span className="font-medium">Server Not responding!</span> Please connect with technical team.
+  </div>
+</div>
+}
+
+  return (
+    <>{saved ?     <div>
       <h2 className="text-center mb-4 text-orange-500 leading-none tracking-tight text-xl mt-3">
         Order Form
       </h2>
@@ -275,8 +375,11 @@ const OrderForm = () => {
           </button>
         </div>
         }
+            {statusDiv} 
       </form>
-    </div>
+  
+    </div> : <Navigate to="/" replace />}</>
+
   );
 };
 
