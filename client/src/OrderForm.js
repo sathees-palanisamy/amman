@@ -22,6 +22,7 @@ const OrderForm = () => {
   const [noOfCopies, setNoOfCopies] = React.useState(0);
   const [totalAmount, setTotalAmount] = React.useState(0);
   const [status, setStatus] = React.useState('');
+  const [orderId,setOrderId] = React.useState('');
 
   const updateParticularAtIndex = (index, newElement) => {
     const newArray = [...particular];
@@ -107,7 +108,9 @@ const OrderForm = () => {
       }
   })
       .then(function (response) {
+  
           if (response.status === 200){ 
+            setOrderId(response.data.orderid);
           setStatus('success');
           } else {
             setStatus('warn')
@@ -115,6 +118,12 @@ const OrderForm = () => {
       }).catch(function (error) {
           setStatus('error')
       });
+  }
+
+  const newOrder = (e) => {
+    e.preventDefault();
+    window.location.reload()
+
   }
 
 
@@ -139,6 +148,7 @@ const OrderForm = () => {
             value={particular[i]}
             placeholder="Particular"
             required
+            disabled={disableSubmit}
           />
         </div>
         <div className="mb-5">
@@ -157,6 +167,7 @@ const OrderForm = () => {
             onChange={(e) => updateBookAtIndex(i, e.target.value)}
             value={book[i]}
             required
+            disabled={disableSubmit}
           />
         </div>
         <div className="mb-5">
@@ -175,6 +186,7 @@ const OrderForm = () => {
             onChange={(e) => updateRateAtIndex(i, e.target.value)}
             value={rate[i]}
             required
+            disabled={disableSubmit}
           />
         </div>
       </div>
@@ -191,7 +203,7 @@ const OrderForm = () => {
       </svg>
       <span className="sr-only">Info</span>
       <div>
-        <span className="font-medium">Order Created Successfully</span> Please click new order for new order creation.
+        <span className="font-medium">Order Created Successfully with number {orderId}</span> Please click new order for new order creation.
       </div>
     </div>
   }
@@ -244,6 +256,7 @@ if(status === 'error') {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={disableSubmit}
             />
           </div>
           <div className="mb-5">
@@ -263,6 +276,7 @@ if(status === 'error') {
               onChange={(e) => setPhone(e.target.value)}
               value={phone}
               required
+              disabled={disableSubmit}
             />
           </div>
         </div>
@@ -283,6 +297,7 @@ if(status === 'error') {
               onChange={(e) => setGst(e.target.value)}
               value={gst}
               required
+              disabled={disableSubmit}
             />
           </div>
           <div className="mb-5">
@@ -301,6 +316,7 @@ if(status === 'error') {
               onChange={(e) => setCode(e.target.value)}
               value={code}
               required
+              disabled={disableSubmit}
             />
           </div>
         </div>
@@ -321,6 +337,7 @@ if(status === 'error') {
               onChange={(e) => setAddress(e.target.value)}
               value={address}
               required
+              disabled={disableSubmit}
             />
           </div>
         </div>
@@ -348,6 +365,18 @@ if(status === 'error') {
         }
             {statusDiv} 
       </form>
+
+      { disableSubmit &&
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={newOrder}
+            className="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+          >
+            New Order
+          </button>
+        </div>
+        }
   
     </div> : <Navigate to="/" replace />}</>
 
