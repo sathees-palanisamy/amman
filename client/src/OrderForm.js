@@ -113,7 +113,6 @@ const OrderForm = () => {
       }
   })
       .then(function (response) {
-          console.log('response:', response);
           if (response.status === 200){ 
             setOrderId(response.data.result[0].orderid);
             setQueryData({...response.data.result[0]});
@@ -306,14 +305,6 @@ const OrderForm = () => {
       pa8Pdf.setText((amt8.toString().split(".")[1]).toString());
     }
 
-    console.log('amt1:', amt1);
-    console.log('amt2:', amt2);
-    console.log('amt3:', amt3);
-    console.log('amt4:', amt4);
-    console.log('amt5:', amt5);
-    console.log('amt6:', amt6);
-    console.log('amt7:', amt7);
-    console.log('amt8:', amt8);
     let allAmt = parseFloat(amt1) + parseFloat(amt2) + parseFloat(amt3) + parseFloat(amt4) + parseFloat(amt5) + parseFloat(amt6) + parseFloat(amt7) + parseFloat(amt8);
 
     let allAmt1 = parseFloat(allAmt).toFixed(2);
@@ -344,7 +335,6 @@ const OrderForm = () => {
       },
     });
 
-    console.log('allAmt:',allAmt1);
     let words = toWords.convert(allAmt1);
 
     ruPdf.setText(words.toString());
@@ -370,8 +360,6 @@ const OrderForm = () => {
     window.location.reload()
 
   }
-
-  console.log('queryData:', queryData);
 
   let formArray = [];
 
@@ -628,7 +616,7 @@ if(status === 'error') {
           </div>
         </div>
         {formArray}
-        { !disableSubmit &&
+        { !disableSubmit && count < 8 && 
         <div className="flex justify-end">
           <button
             className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded"

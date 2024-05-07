@@ -352,7 +352,21 @@ app.post('/list', async (req, res) => {
       if (err) {
         return res.status(500).send(err);
       }
-      return res.status(200).send({ "errno": "0000", });
+
+      let query = "Select * from `orderDb` WHERE `orderid` = '" + req.body.orderId + "'";
+  
+  
+  
+      db.query(query, (err, result) => {
+        if (err) {
+          return res.status(500).send(err);
+        }
+    
+        return res.json({ result });
+    
+      });
+
+      // return res.status(200).send({ "errno": "0000", });
   
     });
   
