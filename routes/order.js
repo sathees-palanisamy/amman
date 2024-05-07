@@ -122,8 +122,21 @@ app.post('/list', async (req, res) => {
   
           return res.status(500).send(err);
         }
+
+        let query = "Select * from `orderDb` WHERE `orderid` = '" + maxorderId + "'";
   
-        return res.status(200).send({ orderid: maxorderId });
+  
+  
+        db.query(query, (err, result) => {
+          if (err) {
+            return res.status(500).send(err);
+          }
+      
+          return res.json({ result });
+      
+        });
+  
+        // return res.status(200).send({ orderid: maxorderId });
   
       });
   
