@@ -40,49 +40,6 @@ const OrderStatus = () => {
           setData([]);
       });
   }
-  //   {
-  //     name: "Sathees Kumar",
-  //     phone: "9003474248",
-  //     gst: "GST01",
-  //     code: "33",
-  //     address: "203,Karandipalayam,kattuvalavu,Grey nagar",
-  //     particular: ["P1", "P2"],
-  //     book: ["10", "20"],
-  //     rate: ["100", "200"],
-  //     count: 2,
-  //     noOfCopies: 30,
-  //     totalAmount: 5000,
-  //     createTimeStamp: "2021-12-31 23:59:59",
-  //   },
-  //   {
-  //     name: "Sathees Kumar",
-  //     phone: "9003474248",
-  //     gst: "GST01",
-  //     code: "33",
-  //     address: "203,Karandipalayam,kattuvalavu,Grey nagar",
-  //     particular: ["P1", "P2"],
-  //     book: ["1", "10"],
-  //     rate: ["2", "200"],
-  //     count: 2,
-  //     noOfCopies: 3,
-  //     totalAmount: 410,
-  //     createTimeStamp: "2022-12-31 23:59:59",
-  //   },
-  //   {
-  //     name: "Sathees Kumar",
-  //     phone: "9003474248",
-  //     gst: "GST01",
-  //     code: "33",
-  //     address: "203,Karandipalayam,kattuvalavu,Grey nagar",
-  //     particular: ["P1", "P2"],
-  //     book: ["2", "1"],
-  //     rate: ["5", "2"],
-  //     count: 2,
-  //     noOfCopies: 7,
-  //     totalAmount: 12,
-  //     createTimeStamp: "2023-12-31 23:59:59",
-  //   },
-  // ];
 
   let tableRow = [];
 
@@ -94,6 +51,9 @@ const OrderStatus = () => {
         </td>
         <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
           {data[i].totalamt}
+        </td>
+        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+          {data[i].orderid}
         </td>
         <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
           {data[i].phone}
@@ -182,6 +142,7 @@ statusDiv = <div className="flex items-center p-4 mb-4 text-sm text-red-800 bord
                 <tr>
                   <th className="px-6 py-3">Date</th>
                   <th className="px-6 py-3">Amount</th>
+                  <th className="px-6 py-3">Order Number</th>
                   <th className="px-6 py-3">Mobile Number</th>
                 </tr>
               </thead>

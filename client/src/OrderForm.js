@@ -58,7 +58,7 @@ const OrderForm = () => {
     }
 
     setNoOfCopies(tempNoOfCopies);
-    setTotalAmount(tempTotalAmount);
+    setTotalAmount(tempTotalAmount.toFixed(2));
     setDisableSubmit(true);
 
     await axios({
@@ -99,8 +99,8 @@ const OrderForm = () => {
           rate9: rate[8],
           count,
           noOfCopies: tempNoOfCopies,
-          totalamt: tempTotalAmount,
-          pendingamt: tempTotalAmount,
+          totalamt: tempTotalAmount.toFixed(2),
+          pendingamt: tempTotalAmount.toFixed(2),
           paid: '',
           paymentId: '',
           paymentStatus: '',
@@ -160,7 +160,7 @@ const OrderForm = () => {
             Book/copies
           </label>
           <input
-            type="text"
+            type="number"
             name={book[i]}
             id={book[i]}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
@@ -179,7 +179,7 @@ const OrderForm = () => {
             Rate
           </label>
           <input
-            type="text"
+            type="number"
             name={rate[i]}
             id={rate[i]}
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
