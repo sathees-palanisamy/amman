@@ -16,6 +16,7 @@ const OrderForm = () => {
   const [book, setBook] = React.useState([]);
   const [rate, setRate] = React.useState([]);
   const [disableSubmit, setDisableSubmit] = React.useState(false);
+  const [pendingAmount, setPendingAmount] = React.useState(0);
 
   const [count, setCount] = React.useState(1);
 
@@ -320,6 +321,46 @@ if(status === 'error') {
               disabled={disableSubmit}
             />
           </div>
+          { disableSubmit &&
+                <><div className="mb-5">
+                  <label
+                    htmlFor="name"
+                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Pending Amount
+                  </label>
+                  <input
+                    type="number"
+                    name="pendingAmount"
+                    id="pendingAmount"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
+                    placeholder="pendingAmount"
+                    onChange={(e) => setPendingAmount(e.target.value)}
+                    value={pendingAmount}
+                    required
+                    disabled={disableSubmit}
+                  />
+                </div>
+                <div className="mb-5">
+                  <label
+                    htmlFor="name"
+                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Total Amount
+                  </label>
+                  <input
+                    type="number"
+                    name="totalAmount"
+                    id="totalAmount"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
+                    placeholder="totalAmount"
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    value={totalAmount}
+                    required
+                    disabled={disableSubmit}
+                  />
+                </div></>
+}
         </div>
         <div className="grid md:grid-cols-1 md:gap-9">
           <div className="mb-5">
