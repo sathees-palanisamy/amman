@@ -58,6 +58,9 @@ const OrderStatus = () => {
         <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
           {data[i].phone}
         </td>
+        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+          {data[i].name}
+        </td>
       </tr>
     );
     tableRow.push(dummmyData);
@@ -144,6 +147,7 @@ statusDiv = <div className="flex items-center p-4 mb-4 text-sm text-red-800 bord
                   <th className="px-6 py-3">Amount</th>
                   <th className="px-6 py-3">Order Number</th>
                   <th className="px-6 py-3">Mobile Number</th>
+                  <th className="px-6 py-3">Name</th>
                 </tr>
               </thead>
               <tbody>{tableRow}</tbody>
