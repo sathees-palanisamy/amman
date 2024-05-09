@@ -2,7 +2,7 @@ import * as React from "react";
 import axios from 'axios';
 import { Navigate } from 'react-router-dom';
 
-axios.defaults.baseURL = 'http://localhost:5001';
+// axios.defaults.baseURL = 'http://localhost:5001';
 
 const OrderStatus = () => {
   const saved = localStorage.getItem("login");

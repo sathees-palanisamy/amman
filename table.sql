@@ -1,4 +1,4 @@
-CREATE TABLE orderDb.
+CREATE TABLE orderDb
 (
 orderid    SMALLINT(6) NOT NULL DEFAULT 0,    
 name       VARCHAR(150) NOT NULL  DEFAULT '',      
@@ -54,4 +54,4 @@ pwd       VARCHAR(150) NOT NULL  DEFAULT '',
 PRIMARY KEY     (Mail)       
 );
 
-INSERT INTO loginDb (Mail,pwd) VALUES ('amman','print');
+INSERT INTO loginDb (Mail,pwd) VALUES ('amman','printers');

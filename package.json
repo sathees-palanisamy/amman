@@ -1,44 +1,27 @@
 {
   "name": "amman",
   "version": "0.1.0",
-  "private": true,
+  "description": "Amman web server",
+  "homepage": "home",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "@testing-library/user-event": "^13.5.0",
     "body-parser": "^1.20.2",
     "concurrently": "^8.2.2",
     "cors": "^2.8.5",
+    "eslint": "^8.57.0",
     "express": "^4.19.2",
     "mysql": "^2.18.1",
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5",
+    "prettier-eslint": "^16.3.0"
   },
   "scripts": {
-    "start": "nodemon index.js ",
+    "start": "node index.js ",
     "server": "nodemon index.js",
     "client": "npm run start --prefix client",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "tailwindcss": "^3.4.3"
+    "dev": "concurrently \"npm run server\" \"npm run client\""
   }
 }
