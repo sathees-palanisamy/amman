@@ -106,7 +106,7 @@ statusDiv = <div className="flex items-center p-4 mb-4 text-sm text-red-800 bord
 
   return (
     <>{saved ?  
-      <><h2 className="text-center mb-4 text-orange-500 leading-none tracking-tight text-xl mt-3">
+      <div className="z-50"><h2 className="text-center mb-4 text-orange-500 leading-none tracking-tight text-xl mt-3 z-50">
         Order Search
       </h2>
       <div className="max-w-4xl mx-auto border-solid border-2 border-orange-600 p-5 rounded-lg m-2">
@@ -155,7 +155,7 @@ statusDiv = <div className="flex items-center p-4 mb-4 text-sm text-red-800 bord
           </div>
         )}
         {statusDiv}
-      </div>  </>: <Navigate to="/" replace />}
+      </div>  </div>: <Navigate to="/" replace />}
     </>
   );
 };

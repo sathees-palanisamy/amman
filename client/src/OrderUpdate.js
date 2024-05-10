@@ -447,7 +447,7 @@ setPendingAmount(response.data.result[0].pendingamt);
   for (let i = 0; i < count; i++) {
     let dummmyFormArray = (
       <div
-        className="grid md:grid-cols-3 md:gap-9 border-dotted border-2 border-orange-600 rounded-lg p-3 m-2"
+        className="grid md:grid-cols-3 md:gap-9 border-dotted border-2 border-orange-600 rounded-lg p-3 m-2 z-50"
         key={i}
       >
         <div className="mb-5">
@@ -590,7 +590,7 @@ setPendingAmount(response.data.result[0].pendingamt);
   return (
     <>
       {saved ? (
-        <div>
+        <div className="z-50">
           <h2 className="text-center mb-4 text-orange-500 leading-none tracking-tight text-xl mt-3">
             Order Update
           </h2>
