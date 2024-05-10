@@ -24,10 +24,10 @@ function NavList() {
 }
  
 function Navbar1() {
-  const [openNav, setOpenNav] = React.useState(false);
+  const [openNav, setOpenNav] = React.useState(true);
  
   const handleWindowResize = () =>
-    window.innerWidth >= 960 && setOpenNav(false);
+    window.innerWidth >= 960 && setOpenNav(true);
  
   React.useEffect(() => {
     window.addEventListener("resize", handleWindowResize);
