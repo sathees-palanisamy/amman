@@ -59,7 +59,7 @@ function Navbar1() {
             <Bars3Icon className="h-6 w-6" strokeWidth={2} />
           )}
         </IconButton>
-      <Collapse open={openNav} >
+      <Collapse open={openNav} className="md:invisible">
         <NavList />
       </Collapse>
     
