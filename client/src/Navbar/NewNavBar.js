@@ -20,6 +20,7 @@ function NewNavBar() {
 
   const OnclickLogout = () => {
     localStorage.removeItem("login");
+    window.location.reload();
   };
 
   const saved = localStorage.getItem("login");
