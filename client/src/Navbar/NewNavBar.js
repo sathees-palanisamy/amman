@@ -62,21 +62,23 @@ function NewNavBar() {
             </li>
             {
               <li>
-               { saved ? 
-                <Link
-                  to="/"
-                  className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-orange-700 md:p-0 dark:text-white md:dark:hover:text-orange-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-                  onClick={OnclickLogout}
-                >
-                  Logout
-                </Link> :
-                              <Link
-                              to="/"
-                              className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-orange-700 md:p-0 dark:text-white md:dark:hover:text-orange-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-                              onClick={OnclickLogout}
-                            >
-                              Login
-                            </Link> }
+                {saved ? (
+                  <Link
+                    to="/"
+                    className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-orange-700 md:p-0 dark:text-white md:dark:hover:text-orange-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+                    onClick={OnclickLogout}
+                  >
+                    Logout
+                  </Link>
+                ) : (
+                  <Link
+                    to="/"
+                    className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-orange-700 md:p-0 dark:text-white md:dark:hover:text-orange-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
+                    onClick={OnclickLogout}
+                  >
+                    Login
+                  </Link>
+                )}
               </li>
             }
           </ul>
@@ -115,14 +117,24 @@ function NewNavBar() {
                   Order Update
                 </NavLink>
               </li>
-              {saved && (
-                <li className="nav__item"  onClick={OnclickLogout}>
+              {saved ? (
+                <li className="nav__item" onClick={OnclickLogout}>
                   <NavLink
                     to="/"
                     className="nav__link"
                     onClick={closeMenuOnMobile}
                   >
                     Logout
+                  </NavLink>
+                </li>
+              ) : (
+                <li className="nav__item" onClick={OnclickLogout}>
+                  <NavLink
+                    to="/"
+                    className="nav__link"
+                    onClick={closeMenuOnMobile}
+                  >
+                    Login
                   </NavLink>
                 </li>
               )}
