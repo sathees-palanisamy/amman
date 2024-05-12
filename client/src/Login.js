@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 import { useStore } from './redux/store';
 
-axios.defaults.baseURL = 'http://localhost:5001';
+// axios.defaults.baseURL = 'http://localhost:5001';
 
 const Login = () => {
     let navigate = useNavigate();
