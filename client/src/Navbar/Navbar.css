@@ -56,7 +56,7 @@
     transition: right 0.4s;
   }
 
-  .div_mobile { display: block; }
+  .div_mobile { display: block; z-index: 1000;  }
   .div_desktop { display: none; }
 }
 @media screen and (max-width: 300px) {
@@ -81,7 +81,7 @@
     white-space: nowrap;
   }
 
-  .div_mobile { display: block; }
+  .div_mobile { display: block; z-index: 1000; }
   .div_desktop { display: none; }
 }
 
