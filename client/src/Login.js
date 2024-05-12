@@ -2,15 +2,17 @@ import * as React from "react";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
+import { useStore } from './redux/store';
 
-// axios.defaults.baseURL = 'http://localhost:5001';
+axios.defaults.baseURL = 'http://localhost:5001';
 
 const Login = () => {
     let navigate = useNavigate();
-    const saved = localStorage.getItem("login");
     const [username, setUsername] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [status, setStatus] = React.useState('');
+    const [state, dispatch] = useStore();
+    console.log('state:', state);
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -26,15 +28,18 @@ const Login = () => {
                 if (response.status === 200) {
                       setStatus('success');
                       if(response.data.status === "success") {
-                        localStorage.setItem("login", "true")
+  
                         navigate('/form', { replace: true });
                       }
+                      dispatch('LOGIN');
                 }
                 else {
+                  dispatch('LOGOFF');
                   setStatus('warn');
                 }
             })
             .catch(function (error) {
+              dispatch('LOGOFF');
                 setStatus('error');
             });
 
@@ -77,7 +82,7 @@ const Login = () => {
     </div>
     }
 
-    return  <>{!saved ? <section className="bg-gray-50 dark:bg-gray-900 z-50">
+    return  <>{!state.login ? <section className="bg-gray-50 dark:bg-gray-900 z-50">
     <div className="flex flex-col items-center justify-evenly px-2 py-2 mx-auto md:h-screen lg:py-0">
         <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
             <div className="p-6 space-y-4 md:space-y-6 sm:p-8">

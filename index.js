@@ -32,13 +32,19 @@ app.use(bodyParser.json());
 
 
 // create connection to database
-const db = mysql.createConnection({
-  host: "4ae.h.filess.io",
-  user: "db_supplyload",
-  password: "5477b9691bba43db2325cb866a9151039247a2ae",
-  database: "db_supplyload"
-});
+// const db = mysql.createConnection({
+//   host: "4ae.h.filess.io",
+//   user: "db_supplyload",
+//   password: "5477b9691bba43db2325cb866a9151039247a2ae",
+//   database: "db_supplyload"
+// });
 
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'db'
+});
 
 // connect to database
 db.connect((err) => {

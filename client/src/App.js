@@ -4,14 +4,14 @@ import { Routes, Route } from "react-router-dom";
 import OrderForm from "./OrderForm";
 import OrderStatus from "./OrderStatus";
 import OrderUpdate from "./OrderUpdate";
-import NewNavBar from './Navbar/NewNavBar';
+import NavBar from './Navbar/NavBar';
 import Login from "./Login";
 
 function App() {
 
   return (
     <div>
-        <NewNavBar />
+        <NavBar />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="form" element={<OrderForm />} />

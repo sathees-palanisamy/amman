@@ -1,14 +1,15 @@
 import * as React from "react";
 import axios from 'axios';
 import { Navigate } from 'react-router-dom';
+import { useStore } from './redux/store';
 
 // axios.defaults.baseURL = 'http://localhost:5001';
 
 const OrderStatus = () => {
-  const saved = localStorage.getItem("login");
   const [name, setName] = React.useState("");
   const [status, setStatus] = React.useState('');
   const [data, setData] = React.useState([]);
+  const [state, dispatch] = useStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -105,7 +106,7 @@ statusDiv = <div className="flex items-center p-4 mb-4 text-sm text-red-800 bord
 }
 
   return (
-    <>{saved ?  
+    <>{state.login ?  
       <div className="z-50"><h2 className="text-center mb-4 text-orange-500 leading-none tracking-tight text-xl mt-3 z-50">
         Order Search
       </h2>

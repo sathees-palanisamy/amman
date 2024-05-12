@@ -4,9 +4,11 @@ import { IoClose, IoMenu } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import Amman from "../Amman.png";
 import "./Navbar.css";
+import { useStore } from '../redux/store';
 
-function NewNavBar() {
+function NavBar() {
   const [showMenu, setShowMenu] = React.useState(false);
+  const [state, dispatch] = useStore();
 
   const toggleMenu = () => {
     setShowMenu(!showMenu);
@@ -19,11 +21,10 @@ function NewNavBar() {
   };
 
   const OnclickLogout = () => {
-    localStorage.removeItem("login");
+    // dispatch('LOGOFF');
     window.location.reload();
   };
 
-  const saved = localStorage.getItem("login");
 
   return (
     <nav className="bg-white border-gray-200 dark:bg-gray-900">
@@ -63,7 +64,7 @@ function NewNavBar() {
             </li>
             {
               <li>
-                {saved ? (
+                {state.login ? (
                   <Link
                     to="/"
                     className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-orange-700 md:p-0 dark:text-white md:dark:hover:text-orange-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
@@ -118,7 +119,7 @@ function NewNavBar() {
                   Order Update
                 </NavLink>
               </li>
-              {saved ? (
+              {state.login ? (
                 <li className="nav__item" onClick={OnclickLogout}>
                   <NavLink
                     to="/"
@@ -158,4 +159,4 @@ function NewNavBar() {
   );
 }
 
-export default NewNavBar;
+export default NavBar;
