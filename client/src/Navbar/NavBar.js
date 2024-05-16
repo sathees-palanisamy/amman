@@ -1,14 +1,14 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { useSelector } from 'react-redux';
 import { IoClose, IoMenu } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import Amman from "../Amman.png";
 import "./Navbar.css";
-import { useStore } from '../redux/store';
 
 function NavBar() {
   const [showMenu, setShowMenu] = React.useState(false);
-  const [state, dispatch] = useStore();
+  const login = useSelector(state => state.auth.login);
 
   const toggleMenu = () => {
     setShowMenu(!showMenu);
@@ -21,7 +21,6 @@ function NavBar() {
   };
 
   const OnclickLogout = () => {
-    // dispatch('LOGOFF');
     window.location.reload();
   };
 
@@ -64,7 +63,7 @@ function NavBar() {
             </li>
             {
               <li>
-                {state.login ? (
+                {login ? (
                   <Link
                     to="/"
                     className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-orange-700 md:p-0 dark:text-white md:dark:hover:text-orange-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
@@ -119,7 +118,7 @@ function NavBar() {
                   Order Update
                 </NavLink>
               </li>
-              {state.login ? (
+              {login ? (
                 <li className="nav__item" onClick={OnclickLogout}>
                   <NavLink
                     to="/"

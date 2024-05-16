@@ -4,17 +4,18 @@ import { Navigate } from "react-router-dom";
 import { PDFDocument } from 'pdf-lib';
 import { ToWords } from 'to-words';
 import formUrl from './GSTin Invoice.pdf';
-import { useStore } from './redux/store';
+import { useSelector } from 'react-redux';
 
 // axios.defaults.baseURL = "http://localhost:5001";
 
 const OrderUpdate = () => {
-  const [name, setName] = React.useState("");
+  const [searchStatus,setSearchStatus] =  React.useState("");
+  const [name, setName] = React.useState(""); 
   const [phone, setPhone] = React.useState("");
   const [gst, setGst] = React.useState("");
   const [code, setCode] = React.useState("");
   const [address, setAddress] = React.useState("");
-  const [state, dispatch] = useStore();
+  const login = useSelector(state => state.auth.login);
 
   const [particular, setParticular] = React.useState([]);
   const [book, setBook] = React.useState([]);
@@ -95,7 +96,7 @@ const b5Pdf = form.getTextField('b5');
 const b6Pdf = form.getTextField('b6');
 const b7Pdf = form.getTextField('b7');
 const b8Pdf = form.getTextField('b8');
-const btPdf = form.getTextField('bt');
+// const btPdf = form.getTextField('bt');
 
 const r1Pdf = form.getTextField('r1');
 const r2Pdf = form.getTextField('r2');
@@ -370,6 +371,8 @@ ruPdf.setText(words.toString());
 
   const handleOrderSearch = async (e) => {
     e.preventDefault();
+    setEnableForm(false);
+    setSearchStatus('');
     await axios({
       method: "post",
       url: "/order",
@@ -378,7 +381,9 @@ ruPdf.setText(words.toString());
       },
     })
       .then(function (response) {
+  
         if (response.status === 200) {
+     
           if (response.data.result.length > 0) {
             setDisableSubmit(false);
             let particularExt= [];
@@ -430,14 +435,14 @@ setTotalAmount(response.data.result[0].totalamt);
 setOrderId(response.data.result[0].orderid);
 setPendingAmount(response.data.result[0].pendingamt);
           } else {
-            setStatus("no data");
+          setSearchStatus("no data");
           }
         } else {
-          setStatus("warn");
+          setSearchStatus("warn");
         }
       })
       .catch(function (error) {
-        setStatus("error");
+        setSearchStatus("error");
       });
   };
 
@@ -515,7 +520,7 @@ setPendingAmount(response.data.result[0].pendingamt);
 
   let statusDiv;
 
-  if (status === "success") {
+  if (status === "success" || searchStatus === "success") {
     statusDiv = (
       <div
         className="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800"
@@ -540,7 +545,19 @@ setPendingAmount(response.data.result[0].pendingamt);
     );
   }
 
-  if (status === "warn") {
+  if(status === 'no data' || searchStatus === 'no data' ) {
+    statusDiv =   <div className="flex items-center p-4 mt-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800" role="alert">
+    <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+    </svg>
+    <span className="sr-only">Info</span>
+    <div>
+      <span className="font-medium">Data not found!</span>
+    </div>
+  </div>
+}
+
+  if (status === "warn" || searchStatus === "warn") {
     statusDiv = (
       <div
         className="flex items-center p-4 mb-4 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800"
@@ -564,7 +581,7 @@ setPendingAmount(response.data.result[0].pendingamt);
     );
   }
 
-  if (status === "error") {
+  if (status === "error" || searchStatus === "error") {
     statusDiv = (
       <div
         className="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800"
@@ -590,7 +607,7 @@ setPendingAmount(response.data.result[0].pendingamt);
 
   return (
     <>
-      {state.login ? (
+      {login ? (
         <div className="z-50">
           <h2 className="text-center mb-4 text-orange-500 leading-none tracking-tight text-xl mt-3">
             Order Update
@@ -624,6 +641,8 @@ setPendingAmount(response.data.result[0].pendingamt);
                   Search
                 </button>
               </div>
+
+              {searchStatus && statusDiv}
             </div>
           </div>
 
@@ -777,7 +796,7 @@ setPendingAmount(response.data.result[0].pendingamt);
               </div>
               {formArray}
               {!disableSubmit && count < 8 && (
-                <div className="flex justify-end">
+                <div className="flex justify-end mb-2">
                   <button
                     className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded"
                     onClick={incrementCount}

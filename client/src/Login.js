@@ -2,7 +2,9 @@ import * as React from "react";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
-import { useStore } from './redux/store';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { loginFunc, logoffFunc } from './redux/actions/auth';
 
 // axios.defaults.baseURL = 'http://localhost:5001';
 
@@ -11,8 +13,9 @@ const Login = () => {
     const [username, setUsername] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [status, setStatus] = React.useState('');
-    const [state, dispatch] = useStore();
-    console.log('state:', state);
+    const dispatch = useDispatch();
+    const login = useSelector(state => state.auth.login);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -27,19 +30,19 @@ const Login = () => {
             .then(function (response) {
                 if (response.status === 200) {
                       setStatus('success');
+                      dispatch(loginFunc(true));
                       if(response.data.status === "success") {
   
                         navigate('/form', { replace: true });
                       }
-                      dispatch('LOGIN');
                 }
                 else {
-                  dispatch('LOGOFF');
+                  dispatch(logoffFunc(false));
                   setStatus('warn');
                 }
             })
             .catch(function (error) {
-              dispatch('LOGOFF');
+              dispatch(logoffFunc(false));
                 setStatus('error');
             });
 
@@ -82,7 +85,7 @@ const Login = () => {
     </div>
     }
 
-    return  <>{!state.login ? <section className="bg-gray-50 dark:bg-gray-900 z-50">
+    return  <>{!login ? <section className="bg-gray-50 dark:bg-gray-900 z-50">
     <div className="flex flex-col items-center justify-evenly px-2 py-2 mx-auto md:h-screen lg:py-0">
         <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
             <div className="p-6 space-y-4 md:space-y-6 sm:p-8">

@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { PDFDocument } from 'pdf-lib';
 import { ToWords } from 'to-words';
 import formUrl from './GSTin Invoice.pdf'
-import { useStore } from './redux/store';
+import { useSelector } from 'react-redux';
 
 // axios.defaults.baseURL = 'http://localhost:5001';
 
@@ -14,7 +14,7 @@ const OrderForm = () => {
   const [gst, setGst] = React.useState("");
   const [code, setCode] = React.useState("");
   const [address, setAddress] = React.useState("");
-  const [state, dispatch] = useStore();
+  const login = useSelector(state => state.auth.login);
 
   const [particular, setParticular] = React.useState([]);
   const [book, setBook] = React.useState([]);
@@ -468,7 +468,7 @@ if(status === 'error') {
 }
 
   return (
-    <>{state.login ?     <div className="z-50">
+    <>{login ?     <div className="z-50">
       <h2 className="text-center mb-4 text-orange-500 leading-none tracking-tight text-xl mt-3">
         Order Form
       </h2>
