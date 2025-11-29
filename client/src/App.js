@@ -6,11 +6,13 @@ import OrderStatus from "./OrderStatus";
 import OrderUpdate from "./OrderUpdate";
 import NavBar from './Navbar/NavBar';
 import Login from "./Login";
+import SessionTimeout from "./SessionTimeout";
 
 function App() {
 
   return (
     <div>
+        <SessionTimeout />
         <NavBar />
         <Routes>
           <Route path="/" element={<Login />} />

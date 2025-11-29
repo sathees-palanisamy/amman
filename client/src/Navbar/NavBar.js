@@ -1,13 +1,15 @@
 import React from "react";
 import { NavLink, Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { IoClose, IoMenu } from "react-icons/io5";
 import Amman from "../Amman.png";
 import "./Navbar.css";
+import { logoffFunc } from "../redux/actions/auth";
 
 function NavBar() {
   const [showMenu, setShowMenu] = React.useState(false);
   const login = useSelector((state) => state.auth.login);
+  const dispatch = useDispatch();
 
   const toggleMenu = () => setShowMenu((s) => !s);
 
@@ -16,7 +18,8 @@ function NavBar() {
   };
 
   const OnclickLogout = () => {
-    window.location.reload();
+    dispatch(logoffFunc(false));
+    window.location.href = "/";
   };
 
   const linkBase =
