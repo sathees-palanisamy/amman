@@ -348,15 +348,21 @@ const OrderForm = () => {
       // Helper to safely draw text with Rupee symbol (use Rs. instead of ₹)
       const currencySymbol = "Rs.";
 
+      const drawRightAligned = (text, xRight, y, options) => {
+        const width = options.font.widthOfTextAtSize(text, options.size);
+        thermalPage.drawText(text, { ...options, x: xRight - width, y });
+      };
+
+      const drawCenterAligned = (text, y, options) => {
+        const width = options.font.widthOfTextAtSize(text, options.size);
+        thermalPage.drawText(text, { ...options, x: (pageWidth - width) / 2, y });
+      };
+
       // ===================== HEADER SECTION =====================
-      thermalPage.drawText("Sri Amman Printers", {
-        x: left,
-        y: y,
-        size: 12,
-        font: helvBold,
-        maxWidth: pageWidth - left * 2,
-        alignment: "center",
-      });
+      drawCenterAligned("TAX INVOICE", y, { size: 10, font: helvBold });
+      y -= 12;
+
+      drawCenterAligned("Sri Amman Printers", y, { size: 14, font: helvBold });
       y -= 14;
 
       const companyAddressLines = [
@@ -365,45 +371,17 @@ const OrderForm = () => {
         "Tamil Nadu"
       ];
       for (const addrLine of companyAddressLines) {
-        thermalPage.drawText(addrLine, {
-          x: left,
-          y: y,
-          size: 7,
-          font: helv,
-          maxWidth: pageWidth - left * 2,
-          alignment: "center",
-        });
-        y -= 8;
+        drawCenterAligned(addrLine, y, { size: 8, font: helv });
+        y -= 9;
       }
 
-      thermalPage.drawText("Phone: 04294-222001", {
-        x: left,
-        y: y,
-        size: 7,
-        font: helv,
-        maxWidth: pageWidth - left * 2,
-        alignment: "center",
-      });
-      y -= 8;
+      drawCenterAligned("Phone: 04294-222001", y, { size: 8, font: helv });
+      y -= 9;
 
-      thermalPage.drawText("GSTIN No: 33ADKFS4757P1ZA", {
-        x: left,
-        y: y,
-        size: 7,
-        font: helv,
-        maxWidth: pageWidth - left * 2,
-        alignment: "center",
-      });
-      y -= 8;
+      drawCenterAligned("GSTIN: 33ADKFS4757P1ZA", y, { size: 8, font: helv });
+      y -= 9;
 
-      thermalPage.drawText("State Code: 33", {
-        x: left,
-        y: y,
-        size: 7,
-        font: helv,
-        maxWidth: pageWidth - left * 2,
-        alignment: "center",
-      });
+      drawCenterAligned("State Code: 33", y, { size: 8, font: helv });
       y -= 12;
 
       drawDottedLine(y + 4);
@@ -413,101 +391,113 @@ const OrderForm = () => {
       thermalPage.drawText(`Bill No: ${queryData.orderid || "IN-00"}`, {
         x: left,
         y: y,
-        size: 8,
+        size: 9,
         font: helvBold,
       });
 
       const dateStr = (queryData.orderDate || "01-Jan-2025").toString();
-      thermalPage.drawText(`Date: ${dateStr}`, {
-        x: pageWidth - left - 80,
-        y: y,
-        size: 8,
-        font: helvBold,
-      });
-      y -= 10;
+      drawRightAligned(`Date: ${dateStr}`, right, y, { size: 9, font: helvBold });
+      y -= 12;
 
       drawDottedLine(y + 2);
       y -= 8;
 
       // ===================== CUSTOMER INFO SECTION =====================
-      thermalPage.drawText("TO:", { x: left, y: y, size: 8, font: helvBold });
+      thermalPage.drawText("TO:", { x: left, y: y, size: 9, font: helvBold });
       y -= 10;
 
       thermalPage.drawText((queryData.name || "Customer Name").toString(), {
         x: left + 4,
         y: y,
-        size: 8,
+        size: 9,
         font: helv,
       });
-      y -= 9;
+      y -= 10;
 
-      thermalPage.drawText(`Address: ${(queryData.address || "").toString()}`, {
-        x: left + 4,
-        y: y,
-        size: 7,
-        font: helv,
-        maxWidth: pageWidth - left * 2 - 4,
-      });
-      y -= 8;
+      if (queryData.address) {
+        thermalPage.drawText(`Address: ${(queryData.address || "").toString()}`, {
+          x: left + 4,
+          y: y,
+          size: 8,
+          font: helv,
+          maxWidth: pageWidth - left * 2 - 4,
+        });
+        y -= 9;
+      }
 
-      thermalPage.drawText(`GSTIN: ${(queryData.gst || "").toString()}`, {
-        x: left + 4,
-        y: y,
-        size: 7,
-        font: helv,
-      });
-      y -= 9;
+      if (queryData.gst) {
+        thermalPage.drawText(`GSTIN: ${(queryData.gst || "").toString()}`, {
+          x: left + 4,
+          y: y,
+          size: 8,
+          font: helv,
+        });
+        y -= 9;
+      }
 
-      thermalPage.drawText(`State Code: ${(queryData.code || "").toString()}`, {
-        x: left + 4,
-        y: y,
-        size: 7,
-        font: helv,
-      });
-      y -= 12;
+      if (queryData.code) {
+        thermalPage.drawText(`State Code: ${(queryData.code || "").toString()}`, {
+          x: left + 4,
+          y: y,
+          size: 8,
+          font: helv,
+        });
+        y -= 12;
+      } else {
+        y -= 3;
+      }
 
       drawDottedLine(y + 4);
       y -= 8;
 
       // ===================== TABLE SECTION =====================
+      // Column Positions
+      const colSN = left;
+      const colPart = left + 18;
+      const colQty = left + 115; // Right aligned anchor
+      const colRate = left + 155; // Right aligned anchor
+      const colAmt = right;      // Right aligned anchor
+
       // Table Headers
-      thermalPage.drawText("SN", { x: left, y: y, size: 7, font: helvBold });
-      thermalPage.drawText("Particulars", { x: left + 16, y: y, size: 7, font: helvBold });
-      thermalPage.drawText("Copies", { x: left + 100, y: y, size: 7, font: helvBold });
-      thermalPage.drawText("Rate", { x: left + 130, y: y, size: 7, font: helvBold });
-      thermalPage.drawText("Amount", { x: pageWidth - left - 36, y: y, size: 7, font: helvBold });
-      y -= 9;
+      thermalPage.drawText("SN", { x: colSN, y: y, size: 8, font: helvBold });
+      thermalPage.drawText("Particulars", { x: colPart, y: y, size: 8, font: helvBold });
+      drawRightAligned("Qty", colQty, y, { size: 8, font: helvBold });
+      drawRightAligned("Rate", colRate, y, { size: 8, font: helvBold });
+      drawRightAligned("Amount", colAmt, y, { size: 8, font: helvBold });
+      y -= 10;
 
       drawSolidLine(y + 3);
-      y -= 6;
+      y -= 8;
 
-      // Items - using Rs. instead of ₹
-      console.log("Thermal items:", items);
+      // Items
       for (const it of items) {
         if (y < 20) break;
         
-        thermalPage.drawText(it.sn, { x: left, y: y, size: 7, font: helv });
+        thermalPage.drawText(it.sn, { x: colSN, y: y, size: 8, font: helv });
 
-        const maxPartChars = 20;
+        const maxPartChars = 22;
         let partText = it.part;
         if (partText.length > maxPartChars) {
           partText = partText.slice(0, maxPartChars);
         }
-        thermalPage.drawText(partText, { x: left + 16, y: y, size: 7, font: helv });
+        thermalPage.drawText(partText, { x: colPart, y: y, size: 8, font: helv });
 
-        thermalPage.drawText(it.qty, { x: left + 100, y: y, size: 7, font: helv });
-        thermalPage.drawText(it.rate, { x: left + 130, y: y, size: 7, font: helv });
-        thermalPage.drawText(`${currencySymbol} ${it.amount}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
-        y -= 9;
+        drawRightAligned(it.qty, colQty, y, { size: 8, font: helv });
+        drawRightAligned(it.rate, colRate, y, { size: 8, font: helv });
+        drawRightAligned(it.amount, colAmt, y, { size: 8, font: helv });
+        y -= 10;
       }
 
       drawSolidLine(y + 3);
       y -= 8;
 
       // ===================== TOTALS SECTION =====================
+      const rightColLabel = right - 80;
+      const rightColValue = right;
+
       if (y > 5) {
-        thermalPage.drawText("Subtotal:", { x: left, y: y, size: 8, font: helv });
-        thermalPage.drawText(`${currencySymbol} ${allAmt.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 8, font: helvBold });
+        drawRightAligned("Subtotal:", rightColLabel, y, { size: 8, font: helv });
+        drawRightAligned(`${currencySymbol} ${allAmt.toFixed(2)}`, rightColValue, y, { size: 8, font: helvBold });
         y -= 10;
       }
 
@@ -519,28 +509,19 @@ const OrderForm = () => {
       const cgst5 = (allAmt * 0.05);
       const cgst12 = (allAmt * 0.12);
 
-      if (y > 5) {
-        thermalPage.drawText("IGST at 0%:", { x: left, y: y, size: 7, font: helv });
-        thermalPage.drawText(`${currencySymbol} ${cgst0.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
-        y -= 8;
-      }
+      const drawTaxLine = (label, value) => {
+         if (value > 0) {
+            drawRightAligned(label, rightColLabel, y, { size: 8, font: helv });
+            drawRightAligned(`${currencySymbol} ${value.toFixed(2)}`, rightColValue, y, { size: 8, font: helv });
+            y -= 9;
+         }
+      };
 
       if (y > 5) {
-        thermalPage.drawText("IGST at 3%:", { x: left, y: y, size: 7, font: helv });
-        thermalPage.drawText(`${currencySymbol} ${cgst3.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
-        y -= 8;
-      }
-
-      if (y > 5) {
-        thermalPage.drawText("IGST at 5%:", { x: left, y: y, size: 7, font: helv });
-        thermalPage.drawText(`${currencySymbol} ${cgst5.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
-        y -= 8;
-      }
-
-      if (y > 5) {
-        thermalPage.drawText("IGST at 12%:", { x: left, y: y, size: 7, font: helv });
-        thermalPage.drawText(`${currencySymbol} ${cgst12.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
-        y -= 10;
+         drawTaxLine("IGST @ 0%:", cgst0);
+         drawTaxLine("IGST @ 3%:", cgst3);
+         drawTaxLine("IGST @ 5%:", cgst5);
+         drawTaxLine("IGST @ 12%:", cgst12);
       }
 
       drawSolidLine(y + 2);
@@ -548,43 +529,40 @@ const OrderForm = () => {
 
       if (y > 5) {
         const grand = allAmt + cgst0 + cgst3 + cgst5 + cgst12;
-        thermalPage.drawText(`TOTAL: ${currencySymbol} ${grand.toFixed(2)}`, {
-          x: left,
-          y: y,
-          size: 10,
-          font: helvBold,
-          maxWidth: pageWidth - left * 2,
-          alignment: "center",
-        });
-        y -= 12;
+        
+        drawRightAligned("TOTAL:", rightColLabel, y, { size: 10, font: helvBold });
+        drawRightAligned(`${currencySymbol} ${grand.toFixed(2)}`, rightColValue, y, { size: 10, font: helvBold });
+        y -= 14;
 
         drawSolidLine(y + 4);
         y -= 10;
 
         const words = toWords.convert(grand.toFixed(2));
-        thermalPage.drawText("Amount (in words):", { x: left, y: y, size: 7, font: helv });
-        y -= 7;
-        const wordsLine = (words || "").toString().slice(0, 180);
+        thermalPage.drawText("Amount (in words):", { x: left, y: y, size: 7, font: helvBold });
+        y -= 8;
+        const wordsLine = (words || "").toString();
         thermalPage.drawText(wordsLine, {
           x: left + 4,
           y: y,
-          size: 6,
+          size: 7,
           font: helv,
           maxWidth: pageWidth - left * 2 - 4,
+          lineHeight: 9,
         });
+        // Adjust y if words wrap (approximate)
+        if (wordsLine.length > 50) y -= 9;
         y -= 12;
 
         drawDottedLine(y + 4);
         y -= 12;
 
-        thermalPage.drawText("Thank You", {
-          x: left,
-          y: y,
-          size: 9,
-          font: helvBold,
-          maxWidth: pageWidth - left * 2,
-          alignment: "center",
-        });
+        // Footer Signatory
+        drawRightAligned("For Sri Amman Printers", right, y, { size: 8, font: helvBold });
+        y -= 25;
+        drawRightAligned("Authorized Signatory", right, y, { size: 8, font: helv });
+        y -= 12;
+
+        drawCenterAligned("Thank You", y, { size: 9, font: helvBold });
       }
 
     } catch (err) {
