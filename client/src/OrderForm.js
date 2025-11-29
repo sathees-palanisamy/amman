@@ -1,7 +1,7 @@
 import * as React from "react";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import { ToWords } from "to-words";
 import formUrl from "./GSTin Invoice.pdf";
 import { useSelector } from "react-redux";
@@ -214,6 +214,7 @@ const OrderForm = () => {
     [name, phone, gst, code, address, rows]
   );
 
+// ...existing code...
   const fillForm = React.useCallback(async () => {
     const formPdfBytes = await fetch(formUrl).then((res) => res.arrayBuffer());
     const pdfDoc = await PDFDocument.load(formPdfBytes);
@@ -241,6 +242,7 @@ const OrderForm = () => {
     orderIdPdf.setText((queryData.orderid || "").toString());
     addressPDF.setText((queryData.address || "").toString());
 
+    // fill rows 1..8 on the existing GST template
     let allAmt = 0;
     for (let i = 1; i <= 8; i++) {
       const sn = safeGet(`sn${i}`);
@@ -288,6 +290,307 @@ const OrderForm = () => {
     ruPdf.setText(toWords.convert(allAmt.toFixed(2)).toString());
     ordPDF.setText((queryData.orderDate || "").toString());
 
+    // Make the existing PDF non-editable: flatten form fields
+    try {
+      form.flatten();
+    } catch (err) {
+      // continue on flatten error
+    }
+
+    // --- Add thermal printer bill page (80mm) ---
+    try {
+      const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const helvBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+      const mmToPt = (mm) => (mm / 25.4) * 72;
+      const pageWidth = Math.round(mmToPt(80)); // ~227pt
+      
+      // Build items from queryData (server response)
+      const items = [];
+      for (let i = 1; i <= 9; i++) {
+        const part = (queryData[`particular${i}`] || "").toString().trim();
+        const bk = (queryData[`book${i}`] || "").toString().trim();
+        const rt = (queryData[`rate${i}`] || "").toString().trim();
+        
+        if (part || bk || rt) {
+          items.push({
+            sn: i.toString(),
+            part: part || "-",
+            qty: bk || "0",
+            rate: rt || "0.00",
+            amount: (safeFloat(bk) * safeFloat(rt)).toFixed(2),
+          });
+        }
+      }
+
+      // Calculate dynamic page height based on items
+      const headerHeight = 90;
+      const itemHeight = 10;
+      const footerHeight = 80;
+      const pageHeight = headerHeight + (items.length * itemHeight) + footerHeight;
+      const thermalPage = pdfDoc.addPage([pageWidth, pageHeight]);
+
+      let y = pageHeight - 12;
+      const left = 8;
+      const right = pageWidth - 8;
+
+      const drawDottedLine = (yPos) => {
+        if (yPos < 0) return;
+        const dashArray = [2, 2];
+        thermalPage.drawLine({ start: { x: left, y: yPos }, end: { x: right, y: yPos }, thickness: 0.5, dashArray });
+      };
+
+      const drawSolidLine = (yPos) => {
+        if (yPos < 0) return;
+        thermalPage.drawLine({ start: { x: left, y: yPos }, end: { x: right, y: yPos }, thickness: 0.5 });
+      };
+
+      // Helper to safely draw text with Rupee symbol (use Rs. instead of ₹)
+      const currencySymbol = "Rs.";
+
+      // ===================== HEADER SECTION =====================
+      thermalPage.drawText("Sri Amman Printers", {
+        x: left,
+        y: y,
+        size: 12,
+        font: helvBold,
+        maxWidth: pageWidth - left * 2,
+        alignment: "center",
+      });
+      y -= 14;
+
+      const companyAddressLines = [
+        "99, Bhavani Road, Near Anna Statue,",
+        "Perundurai - 638052, Erode District,",
+        "Tamil Nadu"
+      ];
+      for (const addrLine of companyAddressLines) {
+        thermalPage.drawText(addrLine, {
+          x: left,
+          y: y,
+          size: 7,
+          font: helv,
+          maxWidth: pageWidth - left * 2,
+          alignment: "center",
+        });
+        y -= 8;
+      }
+
+      thermalPage.drawText("Phone: 04294-222001", {
+        x: left,
+        y: y,
+        size: 7,
+        font: helv,
+        maxWidth: pageWidth - left * 2,
+        alignment: "center",
+      });
+      y -= 8;
+
+      thermalPage.drawText("GSTIN No: 33ADKFS4757P1ZA", {
+        x: left,
+        y: y,
+        size: 7,
+        font: helv,
+        maxWidth: pageWidth - left * 2,
+        alignment: "center",
+      });
+      y -= 8;
+
+      thermalPage.drawText("State Code: 33", {
+        x: left,
+        y: y,
+        size: 7,
+        font: helv,
+        maxWidth: pageWidth - left * 2,
+        alignment: "center",
+      });
+      y -= 12;
+
+      drawDottedLine(y + 4);
+      y -= 8;
+
+      // ===================== BILL METADATA SECTION =====================
+      thermalPage.drawText(`Bill No: ${queryData.orderid || "IN-00"}`, {
+        x: left,
+        y: y,
+        size: 8,
+        font: helvBold,
+      });
+
+      const dateStr = (queryData.orderDate || "01-Jan-2025").toString();
+      thermalPage.drawText(`Date: ${dateStr}`, {
+        x: pageWidth - left - 80,
+        y: y,
+        size: 8,
+        font: helvBold,
+      });
+      y -= 10;
+
+      drawDottedLine(y + 2);
+      y -= 8;
+
+      // ===================== CUSTOMER INFO SECTION =====================
+      thermalPage.drawText("TO:", { x: left, y: y, size: 8, font: helvBold });
+      y -= 10;
+
+      thermalPage.drawText((queryData.name || "Customer Name").toString(), {
+        x: left + 4,
+        y: y,
+        size: 8,
+        font: helv,
+      });
+      y -= 9;
+
+      thermalPage.drawText(`Address: ${(queryData.address || "").toString()}`, {
+        x: left + 4,
+        y: y,
+        size: 7,
+        font: helv,
+        maxWidth: pageWidth - left * 2 - 4,
+      });
+      y -= 8;
+
+      thermalPage.drawText(`GSTIN: ${(queryData.gst || "").toString()}`, {
+        x: left + 4,
+        y: y,
+        size: 7,
+        font: helv,
+      });
+      y -= 9;
+
+      thermalPage.drawText(`State Code: ${(queryData.code || "").toString()}`, {
+        x: left + 4,
+        y: y,
+        size: 7,
+        font: helv,
+      });
+      y -= 12;
+
+      drawDottedLine(y + 4);
+      y -= 8;
+
+      // ===================== TABLE SECTION =====================
+      // Table Headers
+      thermalPage.drawText("SN", { x: left, y: y, size: 7, font: helvBold });
+      thermalPage.drawText("Particulars", { x: left + 16, y: y, size: 7, font: helvBold });
+      thermalPage.drawText("Copies", { x: left + 100, y: y, size: 7, font: helvBold });
+      thermalPage.drawText("Rate", { x: left + 130, y: y, size: 7, font: helvBold });
+      thermalPage.drawText("Amount", { x: pageWidth - left - 36, y: y, size: 7, font: helvBold });
+      y -= 9;
+
+      drawSolidLine(y + 3);
+      y -= 6;
+
+      // Items - using Rs. instead of ₹
+      console.log("Thermal items:", items);
+      for (const it of items) {
+        if (y < 20) break;
+        
+        thermalPage.drawText(it.sn, { x: left, y: y, size: 7, font: helv });
+
+        const maxPartChars = 20;
+        let partText = it.part;
+        if (partText.length > maxPartChars) {
+          partText = partText.slice(0, maxPartChars);
+        }
+        thermalPage.drawText(partText, { x: left + 16, y: y, size: 7, font: helv });
+
+        thermalPage.drawText(it.qty, { x: left + 100, y: y, size: 7, font: helv });
+        thermalPage.drawText(it.rate, { x: left + 130, y: y, size: 7, font: helv });
+        thermalPage.drawText(`${currencySymbol} ${it.amount}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
+        y -= 9;
+      }
+
+      drawSolidLine(y + 3);
+      y -= 8;
+
+      // ===================== TOTALS SECTION =====================
+      if (y > 5) {
+        thermalPage.drawText("Subtotal:", { x: left, y: y, size: 8, font: helv });
+        thermalPage.drawText(`${currencySymbol} ${allAmt.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 8, font: helvBold });
+        y -= 10;
+      }
+
+      drawDottedLine(y + 2);
+      y -= 8;
+
+      const cgst0 = 0;
+      const cgst3 = (allAmt * 0.03);
+      const cgst5 = (allAmt * 0.05);
+      const cgst12 = (allAmt * 0.12);
+
+      if (y > 5) {
+        thermalPage.drawText("IGST at 0%:", { x: left, y: y, size: 7, font: helv });
+        thermalPage.drawText(`${currencySymbol} ${cgst0.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
+        y -= 8;
+      }
+
+      if (y > 5) {
+        thermalPage.drawText("IGST at 3%:", { x: left, y: y, size: 7, font: helv });
+        thermalPage.drawText(`${currencySymbol} ${cgst3.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
+        y -= 8;
+      }
+
+      if (y > 5) {
+        thermalPage.drawText("IGST at 5%:", { x: left, y: y, size: 7, font: helv });
+        thermalPage.drawText(`${currencySymbol} ${cgst5.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
+        y -= 8;
+      }
+
+      if (y > 5) {
+        thermalPage.drawText("IGST at 12%:", { x: left, y: y, size: 7, font: helv });
+        thermalPage.drawText(`${currencySymbol} ${cgst12.toFixed(2)}`, { x: pageWidth - left - 36, y: y, size: 7, font: helv });
+        y -= 10;
+      }
+
+      drawSolidLine(y + 2);
+      y -= 8;
+
+      if (y > 5) {
+        const grand = allAmt + cgst0 + cgst3 + cgst5 + cgst12;
+        thermalPage.drawText(`TOTAL: ${currencySymbol} ${grand.toFixed(2)}`, {
+          x: left,
+          y: y,
+          size: 10,
+          font: helvBold,
+          maxWidth: pageWidth - left * 2,
+          alignment: "center",
+        });
+        y -= 12;
+
+        drawSolidLine(y + 4);
+        y -= 10;
+
+        const words = toWords.convert(grand.toFixed(2));
+        thermalPage.drawText("Amount (in words):", { x: left, y: y, size: 7, font: helv });
+        y -= 7;
+        const wordsLine = (words || "").toString().slice(0, 180);
+        thermalPage.drawText(wordsLine, {
+          x: left + 4,
+          y: y,
+          size: 6,
+          font: helv,
+          maxWidth: pageWidth - left * 2 - 4,
+        });
+        y -= 12;
+
+        drawDottedLine(y + 4);
+        y -= 12;
+
+        thermalPage.drawText("Thank You", {
+          x: left,
+          y: y,
+          size: 9,
+          font: helvBold,
+          maxWidth: pageWidth - left * 2,
+          alignment: "center",
+        });
+      }
+
+    } catch (err) {
+      console.error("Thermal page creation failed", err);
+    }
+
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
@@ -296,6 +599,7 @@ const OrderForm = () => {
     link.download = `${orderId}_GSTin_Invoice.pdf`;
     link.click();
   }, [queryData, orderId]);
+// ...existing code...
 
   const newOrder = React.useCallback((e) => {
     e && e.preventDefault();
