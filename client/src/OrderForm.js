@@ -1,694 +1,472 @@
 import * as React from "react";
-import axios from 'axios';
-import { Navigate } from 'react-router-dom';
-import { PDFDocument } from 'pdf-lib';
-import { ToWords } from 'to-words';
-import formUrl from './GSTin Invoice.pdf'
-import { useSelector } from 'react-redux';
+import axios from "axios";
+import { Navigate } from "react-router-dom";
+import { PDFDocument } from "pdf-lib";
+import { ToWords } from "to-words";
+import formUrl from "./GSTin Invoice.pdf";
+import { useSelector } from "react-redux";
 
-// axios.defaults.baseURL = 'http://localhost:5001';
+const safeFloat = (v) => {
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+// stable, memoized row component — uses row.id as key so inputs are not remounted
+const ItemRow = React.memo(function ItemRow({
+  row,
+  onChange,
+  onRemove,
+  disableRemove,
+  disableSubmit,
+}) {
+  return (
+    <div
+      className="relative bg-white dark:bg-gray-800 border border-orange-100 rounded-lg p-4 shadow-sm grid grid-cols-1 md:grid-cols-6 gap-3 items-end"
+      aria-label={`item-row-${row.id}`}
+    >
+      <div className="md:col-span-3">
+        <label
+          htmlFor={`particular-${row.id}`}
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+        >
+          Particular
+        </label>
+        <input
+          id={`particular-${row.id}`}
+          type="text"
+          value={row.particular}
+          onChange={(e) => onChange(row.id, "particular", e.target.value)}
+          disabled={disableSubmit}
+          placeholder="Enter particular"
+          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <div className="md:col-span-1">
+        <label
+          htmlFor={`book-${row.id}`}
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+        >
+          Copies
+        </label>
+        <input
+          id={`book-${row.id}`}
+          type="number"
+          min="0"
+          value={row.book}
+          onChange={(e) => onChange(row.id, "book", e.target.value)}
+          disabled={disableSubmit}
+          placeholder="0"
+          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <div className="md:col-span-1">
+        <label
+          htmlFor={`rate-${row.id}`}
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+        >
+          Rate
+        </label>
+        <input
+          id={`rate-${row.id}`}
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          value={row.rate}
+          onChange={(e) => onChange(row.id, "rate", e.target.value)}
+          disabled={disableSubmit}
+          placeholder="0.00"
+          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <div className="md:col-span-1 flex flex-col items-end md:items-center gap-2">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          Amount
+          <div className="font-medium text-gray-800 dark:text-gray-100">
+            {(safeFloat(row.book) * safeFloat(row.rate)).toFixed(2)}
+          </div>
+        </div>
+
+        <button
+          onClick={(e) => { e.preventDefault(); onRemove(row.id); }}
+          disabled={disableRemove || disableSubmit}
+          className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-md text-sm font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-300"
+          title="Remove entry"
+          aria-disabled={disableRemove || disableSubmit}
+        >
+          <span className="hidden md:inline">Remove</span>
+          <span className="md:hidden text-red-600">Remove</span>
+        </button>
+      </div>
+    </div>
+  );
+});
 
 const OrderForm = () => {
+  const login = useSelector((state) => state.auth.login);
+
   const [name, setName] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [gst, setGst] = React.useState("");
   const [code, setCode] = React.useState("");
   const [address, setAddress] = React.useState("");
-  const login = useSelector(state => state.auth.login);
 
-  const [particular, setParticular] = React.useState([]);
-  const [book, setBook] = React.useState([]);
-  const [rate, setRate] = React.useState([]);
+  // rows: array of objects with stable id
+  const idRef = React.useRef(1);
+  const [rows, setRows] = React.useState(() => [{ id: idRef.current++, particular: "", book: "", rate: "" }]);
+
   const [disableSubmit, setDisableSubmit] = React.useState(false);
   const [pendingAmount, setPendingAmount] = React.useState(0);
-
-  const [count, setCount] = React.useState(1);
-  const [queryData,setQueryData] = React.useState({});
-
   const [noOfCopies, setNoOfCopies] = React.useState(0);
   const [totalAmount, setTotalAmount] = React.useState(0);
-  const [status, setStatus] = React.useState('');
-  const [orderId,setOrderId] = React.useState('');
+  const [status, setStatus] = React.useState("");
+  const [orderId, setOrderId] = React.useState("");
+  const [queryData, setQueryData] = React.useState({});
 
-  const updateParticularAtIndex = (index, newElement) => {
-    const newArray = [...particular];
-    newArray[index] = newElement;
-    setParticular(newArray);
-  };
+  // handlers
+  const addRow = React.useCallback((e) => {
+    e && e.preventDefault();
+    if (rows.length >= 9) return;
+    setRows((prev) => [...prev, { id: idRef.current++, particular: "", book: "", rate: "" }]);
+  }, [rows.length]);
 
-  const updateBookAtIndex = (index, newElement) => {
-    const newArray = [...book];
-    newArray[index] = newElement;
-    setBook(newArray);
-  };
+  const removeRow = React.useCallback((id) => {
+    setRows((prev) => prev.filter((r) => r.id !== id));
+  }, []);
 
-  const updateRateAtIndex = (index, newElement) => {
-    const newArray = [...rate];
-    newArray[index] = newElement;
-    setRate(newArray);
-  };
+  const updateRow = React.useCallback((id, field, value) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  }, []);
 
-  const incrementCount = (e) => {
-    e.preventDefault();
-    setCount((prevCounter) => prevCounter + 1)
-  }
-
-    const decrementCount = (e, index) => {
-    e.preventDefault();
-    if (count > 1) {
-      setCount((prevCounter) => prevCounter - 1);
-      const newParticular = particular.filter((_, i) => i !== index);
-      const newBook = book.filter((_, i) => i !== index);
-      const newRate = rate.filter((_, i) => i !== index);
-      setParticular(newParticular);
-      setBook(newBook);
-      setRate(newRate);
+  // compute totals live
+  const liveTotals = React.useMemo(() => {
+    let copies = 0;
+    let total = 0;
+    for (const r of rows) {
+      const b = safeFloat(r.book);
+      const rt = safeFloat(r.rate);
+      copies += b;
+      total += b * rt;
     }
-  }
+    return { copies, total: total.toFixed(2) };
+  }, [rows]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    let tempNoOfCopies = 0;
-    let tempTotalAmount = 0;
+  const handleSubmit = React.useCallback(
+    async (e) => {
+      e.preventDefault();
+      let tempNoOfCopies = 0;
+      let tempTotalAmount = 0;
 
-    for (let i = 0; i < count; i++) {
-      tempNoOfCopies = tempNoOfCopies + parseFloat(book[i]);
-      tempTotalAmount =  tempTotalAmount + parseFloat(book[i]) * parseFloat(rate[i]);
-    }
+      for (const r of rows) {
+        const b = safeFloat(r.book);
+        const rt = safeFloat(r.rate);
+        tempNoOfCopies += b;
+        tempTotalAmount += b * rt;
+      }
 
-    setNoOfCopies(tempNoOfCopies);
-    setTotalAmount(tempTotalAmount.toFixed(2));
-    setDisableSubmit(true);
+      setNoOfCopies(tempNoOfCopies);
+      setTotalAmount(tempTotalAmount.toFixed(2));
+      setDisableSubmit(true);
 
-    await axios({
-      method: 'post',
-      url: '/create',
-      data: {
-          name ,
-          phone ,
-          gst ,
-          code ,
-          address ,
-          particular1: particular[0] ,
-          book1:  book[0],
-          rate1: rate[0],
-          particular2: particular[1] ,
-          book2:  book[1],
-          rate2: rate[1],
-          particular3: particular[2] ,
-          book3:  book[2],
-          rate3: rate[2],
-          particular4: particular[3] ,
-          book4:  book[3],
-          rate4: rate[3],
-          particular5: particular[4] ,
-          book5:  book[4],
-          rate5: rate[4],
-          particular6: particular[5] ,
-          book6:  book[5],
-          rate6: rate[5],
-          particular7: particular[6] ,
-          book7:  book[6],
-          rate7: rate[6],
-          particular8: particular[7] ,
-          book8:  book[7],
-          rate8: rate[7],
-          particular9: particular[8] ,
-          book9:  book[8],
-          rate9: rate[8],
-          count,
+      try {
+        const payload = {
+          name,
+          phone,
+          gst,
+          code,
+          address,
+          count: rows.length,
           noOfCopies: tempNoOfCopies,
           totalamt: tempTotalAmount.toFixed(2),
           pendingamt: tempTotalAmount.toFixed(2),
-          paid: '',
-          paymentId: '',
-          paymentStatus: '',
-          paymentRef: ''
+          paid: "",
+          paymentId: "",
+          paymentStatus: "",
+          paymentRef: "",
+        };
+
+        // flatten rows into particular1..9, book1..9, rate1..9
+        for (let i = 0; i < 9; i++) {
+          const r = rows[i];
+          payload[`particular${i + 1}`] = r ? r.particular || "" : "";
+          payload[`book${i + 1}`] = r ? (r.book || "") : "";
+          payload[`rate${i + 1}`] = r ? (r.rate || "") : "";
+        }
+
+        const response = await axios.post("/create", payload);
+
+        if (response.status === 200) {
+          setOrderId(response.data.result[0].orderid);
+          setQueryData({ ...response.data.result[0] });
+          setStatus("success");
+        } else {
+          setStatus("warn");
+          setDisableSubmit(false);
+        }
+      } catch (err) {
+        setStatus("error");
+        setDisableSubmit(false);
       }
-  })
-      .then(function (response) {
-          if (response.status === 200){ 
-            setOrderId(response.data.result[0].orderid);
-            setQueryData({...response.data.result[0]});
-          setStatus('success');
-          } else {
-            setStatus('warn')
-          }
-      }).catch(function (error) {
-          setStatus('error')
-      });
-  }
+    },
+    [name, phone, gst, code, address, rows]
+  );
 
-  const fillForm = async () => {
-		// Step 1: Load the PDF form.
-		const formPdfBytes = await fetch(formUrl).then((res) =>
-			res.arrayBuffer(),
-		);
-		const pdfDoc = await PDFDocument.load(formPdfBytes);
+  const fillForm = React.useCallback(async () => {
+    const formPdfBytes = await fetch(formUrl).then((res) => res.arrayBuffer());
+    const pdfDoc = await PDFDocument.load(formPdfBytes);
+    const form = pdfDoc.getForm();
 
-		// Step 2: Retrieve the form fields.
-		const form = pdfDoc.getForm();
-		const namePdf = form.getTextField('name');
-    const gstPdf = form.getTextField('gst');
-    const codePdf = form.getTextField('code');
-    const orderIdPdf = form.getTextField('orderid');
-    const addressPDF = form.getTextField('address');
-    const sn1Pdf = form.getTextField('sn1');
-    const sn2Pdf = form.getTextField('sn2');
-    const sn3Pdf = form.getTextField('sn3');
-    const sn4Pdf = form.getTextField('sn4');
-    const sn5Pdf = form.getTextField('sn5');
-    const sn6Pdf = form.getTextField('sn6');
-    const sn7Pdf = form.getTextField('sn7');
-    const sn8Pdf = form.getTextField('sn8');
+    const safeGet = (name) => {
+      try {
+        return form.getTextField(name);
+      } catch {
+        return { setText: () => {} };
+      }
+    };
 
-    const p1Pdf = form.getTextField('p1');
-    const p2Pdf = form.getTextField('p2');
-    const p3Pdf = form.getTextField('p3');
-    const p4Pdf = form.getTextField('p4');
-    const p5Pdf = form.getTextField('p5');
-    const p6Pdf = form.getTextField('p6');
-    const p7Pdf = form.getTextField('p7');
-    const p8Pdf = form.getTextField('p8');
+    const namePdf = safeGet("name");
+    const gstPdf = safeGet("gst");
+    const codePdf = safeGet("code");
+    const orderIdPdf = safeGet("orderid");
+    const addressPDF = safeGet("address");
+    const ruPdf = safeGet("ru");
+    const ordPDF = safeGet("orderDate");
 
-    const b1Pdf = form.getTextField('b1');
-    const b2Pdf = form.getTextField('b2');
-    const b3Pdf = form.getTextField('b3');
-    const b4Pdf = form.getTextField('b4');
-    const b5Pdf = form.getTextField('b5');
-    const b6Pdf = form.getTextField('b6');
-    const b7Pdf = form.getTextField('b7');
-    const b8Pdf = form.getTextField('b8');
-    const btPdf = form.getTextField('bt');
+    namePdf.setText((queryData.name || "").toString());
+    gstPdf.setText((queryData.gst || "").toString());
+    codePdf.setText((queryData.code || "").toString());
+    orderIdPdf.setText((queryData.orderid || "").toString());
+    addressPDF.setText((queryData.address || "").toString());
 
-    const r1Pdf = form.getTextField('r1');
-    const r2Pdf = form.getTextField('r2');
-    const r3Pdf = form.getTextField('r3');
-    const r4Pdf = form.getTextField('r4');
-    const r5Pdf = form.getTextField('r5');
-    const r6Pdf = form.getTextField('r6');
-    const r7Pdf = form.getTextField('r7');
-    const r8Pdf = form.getTextField('r8');
+    let allAmt = 0;
+    for (let i = 1; i <= 8; i++) {
+      const sn = safeGet(`sn${i}`);
+      const p = safeGet(`p${i}`);
+      const b = safeGet(`b${i}`);
+      const r = safeGet(`r${i}`);
+      const a = safeGet(`a${i}`);
+      const pa = safeGet(`pa${i}`);
 
-    const a1Pdf = form.getTextField('a1');
-    const a2Pdf = form.getTextField('a2');
-    const a3Pdf = form.getTextField('a3');
-    const a4Pdf = form.getTextField('a4');
-    const a5Pdf = form.getTextField('a5');
-    const a6Pdf = form.getTextField('a6');
-    const a7Pdf = form.getTextField('a7');
-    const a8Pdf = form.getTextField('a8');
-    const atPdf = form.getTextField('at');
-
-    const pa1Pdf = form.getTextField('pa1');
-    const pa2Pdf = form.getTextField('pa2');
-    const pa3Pdf = form.getTextField('pa3');
-    const pa4Pdf = form.getTextField('pa4');
-    const pa5Pdf = form.getTextField('pa5');
-    const pa6Pdf = form.getTextField('pa6');
-    const pa7Pdf = form.getTextField('pa7');
-    const pa8Pdf = form.getTextField('pa8');
-    const patPdf = form.getTextField('pat');
-
-    const ruPdf = form.getTextField('ru');
-
-    const ordPDF = form.getTextField('orderDate');
-  
-
-
-		// Step 3: Set values for the form fields.
-		namePdf.setText(queryData.name.toString());
-    gstPdf.setText(queryData.gst.toString());
-    codePdf.setText(queryData.code.toString());
-    orderIdPdf.setText(queryData.orderid.toString());
-    addressPDF.setText(queryData.address.toString());
-
-    let amt1 = 0
-    if (queryData.book1 !== "undefined") {
-      sn1Pdf.setText('1');
-      b1Pdf.setText(queryData.book1.toString());
-      p1Pdf.setText(queryData.particular1.toString());
-      r1Pdf.setText(queryData.rate1.toString());
-      let amt = parseFloat(queryData.book1) * parseFloat(queryData.rate1);
-      amt1 = amt.toFixed(2);
-      a1Pdf.setText((amt1.toString().split(".")[0]).toString());
-      pa1Pdf.setText(amt1.toString().split(".")[1]);
+      const bk = safeFloat(queryData[`book${i}`]);
+      const rt = safeFloat(queryData[`rate${i}`]);
+      if (bk > 0 || (queryData[`particular${i}`] || "") !== "") {
+        sn.setText(i.toString());
+        b.setText((queryData[`book${i}`] || "").toString());
+        p.setText((queryData[`particular${i}`] || "").toString());
+        r.setText((queryData[`rate${i}`] || "").toString());
+        const amt = (bk * rt).toFixed(2);
+        a.setText(amt.split(".")[0] || "0");
+        pa.setText(amt.split(".")[1] || "00");
+        allAmt += parseFloat(amt);
+      }
     }
 
-    let amt2 = 0
-    if (queryData.book2 !== "undefined") {
-      sn2Pdf.setText('2');
-      b2Pdf.setText(queryData.book2.toString());
-      p2Pdf.setText(queryData.particular2.toString());
-      r2Pdf.setText(queryData.rate2.toString());
-      let amt = parseFloat(queryData.book2) * parseFloat(queryData.rate2);
-      amt2 = amt.toFixed(2);
-      a2Pdf.setText((amt2.toString().split(".")[0]).toString());
-      pa2Pdf.setText((amt2.toString().split(".")[1]).toString());
-    }
-
-    let amt3 = 0
-    if (queryData.book3 !== "undefined") {
-      sn3Pdf.setText('3');
-      b3Pdf.setText(queryData.book3.toString());
-      p3Pdf.setText(queryData.particular3.toString());
-      r3Pdf.setText(queryData.rate3.toString());
-      let amt = parseFloat(queryData.book3) * parseFloat(queryData.rate3);
-      amt3 = amt.toFixed(2);
-      a3Pdf.setText((amt3.toString().split(".")[0]).toString());
-      pa3Pdf.setText((amt3.toString().split(".")[1]).toString());
-    }
-
-    let amt4 = 0
-    if (queryData.book4 !== "undefined") {
-      sn4Pdf.setText('4');
-      b4Pdf.setText(queryData.book4.toString());
-      p4Pdf.setText(queryData.particular4.toString());
-      r4Pdf.setText(queryData.rate4.toString());
-      let amt = parseFloat(queryData.book4) * parseFloat(queryData.rate4);
-      amt4 = amt.toFixed(2);
-      a4Pdf.setText((amt4.toString().split(".")[0]).toString());
-      pa4Pdf.setText((amt4.toString().split(".")[1]).toString());
-    }
-
-    let amt5 = 0
-    if (queryData.book5 !== "undefined") {
-      sn5Pdf.setText('5');
-      b5Pdf.setText(queryData.book5.toString());
-      p5Pdf.setText(queryData.particular5.toString());
-      r5Pdf.setText(queryData.rate5.toString());
-      let amt = parseFloat(queryData.book5) * parseFloat(queryData.rate5);
-      amt5 = amt.toFixed(2);
-      a5Pdf.setText((amt5.toString().split(".")[0]).toString());
-      pa5Pdf.setText((amt5.toString().split(".")[1]).toString());
-    }
-
-    let amt6 = 0
-    if (queryData.book6 !== "undefined") {
-      sn6Pdf.setText('6');
-      b6Pdf.setText(queryData.book6.toString());
-      p6Pdf.setText(queryData.particular6.toString());
-      r6Pdf.setText(queryData.rate6.toString());
-      let amt = parseFloat(queryData.book6) * parseFloat(queryData.rate6);
-      amt6 = amt.toFixed(2);
-      a6Pdf.setText((amt6.toString().split(".")[0]).toString());
-      pa6Pdf.setText((amt6.toString().split(".")[1]).toString());
-    }
-
-    let amt7 = 0
-    if (queryData.book7 !== "undefined") {
-      sn7Pdf.setText('7');
-      b7Pdf.setText(queryData.book7.toString());
-      p7Pdf.setText(queryData.particular7.toString());
-      r7Pdf.setText(queryData.rate7.toString());
-      let amt = parseFloat(queryData.book7) * parseFloat(queryData.rate7);
-      amt7 = amt.toFixed(2);
-      a7Pdf.setText((amt7.toString().split(".")[0]).toString());
-      pa7Pdf.setText((amt7.toString().split(".")[1]).toString());
-    }
-
-    let amt8 = 0
-    if (queryData.book8 !== "undefined") {
-      sn8Pdf.setText('8');
-      b8Pdf.setText(queryData.book8.toString());
-      p8Pdf.setText(queryData.particular8.toString());
-      r8Pdf.setText(queryData.rate8.toString());
-      let amt = parseFloat(queryData.book8) * parseFloat(queryData.rate8);
-      amt8 = amt.toFixed(2);
-      a8Pdf.setText((amt8.toString().split(".")[0]).toString());
-      pa8Pdf.setText((amt8.toString().split(".")[1]).toString());
-    }
-
-    let allAmt = parseFloat(amt1) + parseFloat(amt2) + parseFloat(amt3) + parseFloat(amt4) + parseFloat(amt5) + parseFloat(amt6) + parseFloat(amt7) + parseFloat(amt8);
-
-    let allAmt1 = parseFloat(allAmt).toFixed(2);
-
-    atPdf.setText(allAmt1.toString().split(".")[0]);
-    patPdf.setText(allAmt1.toString().split(".")[1]);
-
-    ordPDF.setText(queryData.orderDate.toString())
+    const atPdf = safeGet("at");
+    const patPdf = safeGet("pat");
+    atPdf.setText(Math.floor(allAmt).toString());
+    patPdf.setText(((allAmt % 1) * 100).toFixed(0).padStart(2, "0"));
 
     const toWords = new ToWords({
-      localeCode: 'en-IN',
+      localeCode: "en-IN",
       converterOptions: {
         currency: true,
         ignoreDecimal: false,
         ignoreZeroCurrency: false,
         doNotAddOnly: false,
         currencyOptions: {
-          // can be used to override defaults for the selected locale
-          name: 'Rupee',
-          plural: 'Rupees',
-          symbol: '₹',
-          fractionalUnit: {
-            name: 'Paisa',
-            plural: 'Paise',
-            symbol: '',
-          },
+          name: "Rupee",
+          plural: "Rupees",
+          symbol: "₹",
+          fractionalUnit: { name: "Paisa", plural: "Paise", symbol: "" },
         },
       },
     });
 
-    let words = toWords.convert(allAmt1);
+    ruPdf.setText(toWords.convert(allAmt.toFixed(2)).toString());
+    ordPDF.setText((queryData.orderDate || "").toString());
 
-    ruPdf.setText(words.toString());
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${orderId}_GSTin_Invoice.pdf`;
+    link.click();
+  }, [queryData, orderId]);
 
-		// Step 4: Save the modified PDF.
-		const pdfBytes = await pdfDoc.save();
+  const newOrder = React.useCallback((e) => {
+    e && e.preventDefault();
+    window.location.reload();
+  }, []);
 
-		// Step 5: Create a `Blob` from the PDF bytes,
-		const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-
-		// Step 6: Create a download URL for the `Blob`.
-		const url = URL.createObjectURL(blob);
-
-		// Step 7: Create a link element and simulate a click event to trigger the download.
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = `${orderId}_GSTin_Invoice.pdf`;
-		link.click();
-	};
-
-  const newOrder = (e) => {
-    e.preventDefault();
-    window.location.reload()
-
-  }
-
- let formArray = [];
-
-  for (let i = 0; i < count; i++) {
-    let dummmyFormArray = (
-      <div className="grid md:grid-cols-3 md:gap-9 border-dotted border-2 border-orange-600 rounded-lg p-3 m-2 relative" key={i}>
-        <button
-          onClick={(e) => decrementCount(e, i)}
-          className="absolute top-1 right-3 inline-flex items-center gap-1 px-3 py-0.2 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:text-red-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-950 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900 dark:hover:text-red-300 dark:focus:ring-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Remove this entry"
-          disabled={disableSubmit}
-        >
-          <span aria-hidden="true" className="text-lg">🗑️</span>
-        </button>
-        <div className="mb-5">
-          <label
-            htmlFor={particular[i]}
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Particulars
-          </label>
-          <input
-            type="text"
-            name={particular[i]}
-            id={particular[i]}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-            onChange={(e) => updateParticularAtIndex(i, e.target.value)}
-            value={particular[i]}
-            placeholder="Particular"
-            required
-            disabled={disableSubmit}
-          />
-        </div>
-        <div className="mb-5">
-          <label
-            htmlFor={book[i]}
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Book/copies
-          </label>
-          <input
-            type="number"
-            name={book[i]}
-            id={book[i]}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-            placeholder="Book/Copies"
-            onChange={(e) => updateBookAtIndex(i, e.target.value)}
-            value={book[i]}
-            required
-            disabled={disableSubmit}
-          />
-        </div>
-        <div className="mb-5">
-          <label
-            htmlFor={rate[i]}
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Rate
-          </label>
-          <input
-            type="number"
-            name={rate[i]}
-            id={rate[i]}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-            placeholder="Rate"
-            onChange={(e) => updateRateAtIndex(i, e.target.value)}
-            value={rate[i]}
-            required
-            disabled={disableSubmit}
-          />
-        </div>
+  // status UI
+  let statusDiv = null;
+  if (status === "success") {
+    statusDiv = (
+      <div className="p-4 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm">
+        <strong className="font-semibold">Success:</strong> Order created #{orderId}. Click New Order or Download invoice.
       </div>
     );
-    formArray.push(dummmyFormArray);
-  }
-  let statusDiv;
-
-  if(status === 'success') {
-      statusDiv =   <div className="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800" role="alert">
-      <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-      </svg>
-      <span className="sr-only">Info</span>
-      <div>
-        <span className="font-medium">Order Created Successfully with number {orderId}</span> Please click new order for new order creation.
+  } else if (status === "warn") {
+    statusDiv = (
+      <div className="p-4 rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
+        <strong className="font-semibold">Warning:</strong> Issue creating order, contact support.
       </div>
-    </div>
+    );
+  } else if (status === "error") {
+    statusDiv = (
+      <div className="p-4 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm">
+        <strong className="font-semibold">Error:</strong> Server error, try again later.
+      </div>
+    );
   }
 
-  if(status === 'warn') {
-    statusDiv =   <div className="flex items-center p-4 mb-4 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800" role="alert">
-    <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-    </svg>
-    <span className="sr-only">Info</span>
-    <div>
-      <span className="font-medium">Order Creation have some issue!</span> Please connect with technical team.
-    </div>
-  </div>
-}
-
-if(status === 'error') {
-  statusDiv = <div className="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800" role="alert">
-  <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-  </svg>
-  <span className="sr-only">Info</span>
-  <div>
-    <span className="font-medium">Server Not responding!</span> Please connect with technical team.
-  </div>
-</div>
-}
+  if (!login) return <Navigate to="/" replace />;
 
   return (
-    <>{login ?     <div className="z-50">
-      <h2 className="text-center mb-4 text-orange-500 leading-none tracking-tight text-xl mt-3">
-        Order Form
-      </h2>
+    <div className="max-w-5xl mx-auto p-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <h1 className="text-2xl font-extrabold text-orange-600">Order Form</h1>
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-600 dark:text-gray-300 text-right">
+            <div>
+              Live Copies: <span className="font-medium text-gray-800 dark:text-gray-100">{liveTotals.copies}</span>
+            </div>
+            <div>
+              Total: <span className="font-semibold text-orange-600">₹ {liveTotals.total}</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
-      <form className="max-w-4xl mx-auto border-solid border-2 border-orange-600 p-5 rounded-lg m-2" onSubmit={handleSubmit}>
-        <div className="grid md:grid-cols-2 md:gap-9">
-          <div className="mb-5">
-            <label
-              htmlFor="name"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
-              Name
-            </label>
+      <form onSubmit={handleSubmit} className="space-y-4 bg-orange-50/20 p-6 rounded-lg border border-orange-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Name</label>
             <input
-              type="text"
-              name="name"
-              id="name"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-              placeholder="Name"
-              required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              disabled={disableSubmit}
-            />
-          </div>
-          <div className="mb-5">
-            <label
-              htmlFor="phone"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
-              Mobile number
-            </label>
-            <input
-              type="tel"
-              pattern="\d{10}"
-              name="phone"
-              id="phone"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-              placeholder="Mobile NUmber"
-              onChange={(e) => setPhone(e.target.value)}
-              value={phone}
               required
               disabled={disableSubmit}
+              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
             />
           </div>
-        </div>
-        <div className="grid md:grid-cols-2 md:gap-9">
-          <div className="mb-5">
-            <label
-              htmlFor="name"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
-              Party GST
-            </label>
-            <input
-              type="text"
-              name="gst"
-              id="gst"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-              placeholder="Party GST"
-              onChange={(e) => setGst(e.target.value)}
-              value={gst}
-              required
-              disabled={disableSubmit}
-            />
-          </div>
-          <div className="mb-5">
-            <label
-              htmlFor="name"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
-              State Code
-            </label>
-            <input
-              type="text"
-              name="code"
-              id="code"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-              placeholder="State code"
-              onChange={(e) => setCode(e.target.value)}
-              value={code}
-              required
-              disabled={disableSubmit}
-            />
-          </div>
-          { disableSubmit &&
-                <><div className="mb-5">
-                  <label
-                    htmlFor="name"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Pending Amount
-                  </label>
-                  <input
-                    type="number"
-                    name="pendingAmount"
-                    id="pendingAmount"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-                    placeholder="pendingAmount"
-                    onChange={(e) => setPendingAmount(e.target.value)}
-                    value={pendingAmount}
-                    required
-                    disabled={disableSubmit}
-                  />
-                </div>
-                <div className="mb-5">
-                  <label
-                    htmlFor="name"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Total Amount
-                  </label>
-                  <input
-                    type="number"
-                    name="totalAmount"
-                    id="totalAmount"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-                    placeholder="totalAmount"
-                    onChange={(e) => setTotalAmount(e.target.value)}
-                    value={totalAmount}
-                    required
-                    disabled={disableSubmit}
-                  />
-                </div></>
-}
-        </div>
-        <div className="grid md:grid-cols-1 md:gap-9">
-          <div className="mb-5">
-            <label
-              htmlFor="name"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
-              Address
-            </label>
-            <input
-              type="text"
-              name="address"
-              id="address"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500"
-              placeholder="Address"
-              onChange={(e) => setAddress(e.target.value)}
-              value={address}
-              required
-              disabled={disableSubmit}
-            />
-          </div>
-        </div>
-        {formArray}
-        { !disableSubmit && count < 8 && 
-        <div className="flex justify-end">
-          <button
-            className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded"
-            onClick={incrementCount}
-          >
-            Add
-          </button>
-        </div>
-}
-        { !disableSubmit &&
-        <div className="flex justify-center">
-          <button
-            type="submit"
-            className="text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-800"
-            disabled={disableSubmit}
-          >
-            Submit
-          </button>
-        </div>
-        }
-            {statusDiv} 
-      </form>
 
-      { disableSubmit &&
-        <div className="flex justify-center md:gap-20">
-          <button
-            type="button"
-            onClick={newOrder}
-            className="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
-          >
-            New Order
-          </button>
           <div>
-      <button  onClick={fillForm} type="button" data-tooltip-target="tooltip-download" data-tooltip-placement="left" class="flex justify-center items-center w-[52px] h-[52px] text-gray-500 hover:text-gray-900 bg-white rounded-full border border-gray-200 dark:border-gray-600 shadow-sm dark:hover:text-white dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:focus:ring-gray-400">
-            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z"/>
-                <path d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/>
-            </svg>
-            <span class="sr-only">Download</span>
-        </button>
-        <div id="tooltip-download" role="tooltip" class="absolute z-10 invisible inline-block w-auto px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
-            Download
-            <div class="tooltip-arrow" data-popper-arrow></div>
-        </div>
-		</div> 
-        </div>
-        }
-  
-    </div> : <Navigate to="/" replace />}
-    </>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Mobile</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              pattern="\d{10}"
+              disabled={disableSubmit}
+              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
+            />
+          </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Party GST</label>
+            <input
+              value={gst}
+              onChange={(e) => setGst(e.target.value)}
+              required
+              disabled={disableSubmit}
+              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">State Code</label>
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              disabled={disableSubmit}
+              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Address</label>
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
+              disabled={disableSubmit}
+              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {rows.map((r) => (
+            <ItemRow
+              key={r.id}
+              row={r}
+              onChange={updateRow}
+              onRemove={removeRow}
+              disableRemove={rows.length <= 1}
+              disableSubmit={disableSubmit}
+            />
+          ))}
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={addRow}
+              disabled={disableSubmit || rows.length >= 9}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white border border-orange-300 text-orange-600 font-medium hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:opacity-50"
+            >
+              + Add item
+            </button>
+
+            {!disableSubmit && (
+              <button
+                type="submit"
+                className="inline-flex items-center px-5 py-2 rounded-md bg-orange-600 text-white font-semibold hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              >
+                Submit Order
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {disableSubmit && (
+              <>
+                <button onClick={newOrder} className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-300">
+                  New Order
+                </button>
+
+                <button onClick={fillForm} className="px-3 py-2 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-300">
+                  Download Invoice
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-3 rounded-md bg-white dark:bg-gray-800 border border-orange-100">
+            <div className="text-sm text-gray-500">Copies</div>
+            <div className="text-xl font-semibold">{disableSubmit ? noOfCopies : liveTotals.copies}</div>
+          </div>
+          <div className="p-3 rounded-md bg-white dark:bg-gray-800 border border-orange-100">
+            <div className="text-sm text-gray-500">Total Amount</div>
+            <div className="text-xl font-semibold text-orange-600">₹ {disableSubmit ? totalAmount : liveTotals.total}</div>
+          </div>
+          <div className="p-3 rounded-md bg-white dark:bg-gray-800 border border-orange-100">
+            <div className="text-sm text-gray-500">Pending</div>
+            <div className="text-xl font-semibold">₹ {pendingAmount}</div>
+          </div>
+        </div>
+
+        <div>{statusDiv}</div>
+      </form>
+    </div>
   );
 };
 
