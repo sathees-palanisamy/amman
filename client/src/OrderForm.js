@@ -333,9 +333,6 @@ const OrderForm = () => {
         <div className="flex items-center gap-3">
           <div className="text-sm text-gray-600 dark:text-gray-300 text-right">
             <div>
-              Live Copies: <span className="font-medium text-gray-800 dark:text-gray-100">{liveTotals.copies}</span>
-            </div>
-            <div>
               Total: <span className="font-semibold text-orange-600">₹ {liveTotals.total}</span>
             </div>
           </div>
@@ -451,16 +448,8 @@ const OrderForm = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-3 rounded-md bg-white dark:bg-gray-800 border border-orange-100">
-            <div className="text-sm text-gray-500">Copies</div>
-            <div className="text-xl font-semibold">{disableSubmit ? noOfCopies : liveTotals.copies}</div>
-          </div>
-          <div className="p-3 rounded-md bg-white dark:bg-gray-800 border border-orange-100">
             <div className="text-sm text-gray-500">Total Amount</div>
             <div className="text-xl font-semibold text-orange-600">₹ {disableSubmit ? totalAmount : liveTotals.total}</div>
-          </div>
-          <div className="p-3 rounded-md bg-white dark:bg-gray-800 border border-orange-100">
-            <div className="text-sm text-gray-500">Pending</div>
-            <div className="text-xl font-semibold">₹ {pendingAmount}</div>
           </div>
         </div>
 
