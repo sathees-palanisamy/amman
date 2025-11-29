@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-// axios.defaults.baseURL = 'http://localhost:5001';
+axios.defaults.baseURL = 'http://localhost:5001';
 
 const OrderStatus = () => {
   const [name, setName] = React.useState("");

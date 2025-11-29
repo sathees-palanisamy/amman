@@ -6,7 +6,7 @@ import { ToWords } from 'to-words';
 import formUrl from './GSTin Invoice.pdf';
 import { useSelector } from 'react-redux';
 
-// axios.defaults.baseURL = "http://localhost:5001";
+axios.defaults.baseURL = "http://localhost:5001";
 
 const OrderUpdate = () => {
   const [searchStatus,setSearchStatus] =  React.useState("");

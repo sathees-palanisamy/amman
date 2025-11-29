@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import { loginFunc, logoffFunc } from './redux/actions/auth';
 
-// axios.defaults.baseURL = 'http://localhost:5001';
+axios.defaults.baseURL = 'http://localhost:5001';
 
 const Login = () => {
     let navigate = useNavigate();

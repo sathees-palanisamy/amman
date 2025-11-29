@@ -17,4 +17,4 @@ Run this script in project directory which will run the react and express node s
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.<br />
 
 2. Runs the node js server in the development mode.<br />
-call [http://localhost:5000](http://localhost:5001) to access it.<br />
+call [http://localhost:5001](http://localhost:5001) to access it.<br />

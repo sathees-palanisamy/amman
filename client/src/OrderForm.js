@@ -53,6 +53,19 @@ const OrderForm = () => {
     setCount((prevCounter) => prevCounter + 1)
   }
 
+    const decrementCount = (e, index) => {
+    e.preventDefault();
+    if (count > 1) {
+      setCount((prevCounter) => prevCounter - 1);
+      const newParticular = particular.filter((_, i) => i !== index);
+      const newBook = book.filter((_, i) => i !== index);
+      const newRate = rate.filter((_, i) => i !== index);
+      setParticular(newParticular);
+      setBook(newBook);
+      setRate(newRate);
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     let tempNoOfCopies = 0;
@@ -362,11 +375,19 @@ const OrderForm = () => {
 
   }
 
-  let formArray = [];
+ let formArray = [];
 
   for (let i = 0; i < count; i++) {
     let dummmyFormArray = (
-      <div className="grid md:grid-cols-3 md:gap-9 border-dotted border-2 border-orange-600 rounded-lg p-3 m-2" key={i}>
+      <div className="grid md:grid-cols-3 md:gap-9 border-dotted border-2 border-orange-600 rounded-lg p-3 m-2 relative" key={i}>
+        <button
+          onClick={(e) => decrementCount(e, i)}
+          className="absolute top-1 right-3 inline-flex items-center gap-1 px-3 py-0.2 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:text-red-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-950 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900 dark:hover:text-red-300 dark:focus:ring-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Remove this entry"
+          disabled={disableSubmit}
+        >
+          <span aria-hidden="true" className="text-lg">🗑️</span>
+        </button>
         <div className="mb-5">
           <label
             htmlFor={particular[i]}
@@ -428,7 +449,6 @@ const OrderForm = () => {
     );
     formArray.push(dummmyFormArray);
   }
-
   let statusDiv;
 
   if(status === 'success') {
