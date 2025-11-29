@@ -324,9 +324,9 @@ const OrderForm = () => {
       }
 
       // Calculate dynamic page height based on items
-      const headerHeight = 90;
+      const headerHeight = 180;
       const itemHeight = 10;
-      const footerHeight = 80;
+      const footerHeight = 130;
       const pageHeight = headerHeight + (items.length * itemHeight) + footerHeight;
       const thermalPage = pdfDoc.addPage([pageWidth, pageHeight]);
 
