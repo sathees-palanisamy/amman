@@ -5,6 +5,22 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { ToWords } from "to-words";
 import formUrl from "./GSTin Invoice.pdf";
 import { useSelector } from "react-redux";
+import {
+  UserIcon,
+  PhoneIcon,
+  MapPinIcon,
+  IdentificationIcon,
+  BuildingLibraryIcon,
+  PlusIcon,
+  TrashIcon,
+  DocumentArrowDownIcon,
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  XCircleIcon,
+  CurrencyRupeeIcon,
+  ShoppingBagIcon
+} from "@heroicons/react/24/outline";
 
 const safeFloat = (v) => {
   const n = parseFloat(v);
@@ -18,88 +34,98 @@ const ItemRow = React.memo(function ItemRow({
   onRemove,
   disableRemove,
   disableSubmit,
+  index
 }) {
   return (
     <div
-      className="relative bg-white dark:bg-gray-800 border border-orange-100 rounded-lg p-4 shadow-sm grid grid-cols-1 md:grid-cols-6 gap-3 items-end"
+      className="group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 ease-in-out"
       aria-label={`item-row-${row.id}`}
     >
-      <div className="md:col-span-3">
-        <label
-          htmlFor={`particular-${row.id}`}
-          className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
-        >
-          Particular
-        </label>
-        <input
-          id={`particular-${row.id}`}
-          type="text"
-          value={row.particular}
-          onChange={(e) => onChange(row.id, "particular", e.target.value)}
-          disabled={disableSubmit}
-          placeholder="Enter particular"
-          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
-        />
+      <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xs font-bold shadow-sm border border-orange-200 z-10">
+        {index + 1}
       </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+        <div className="md:col-span-6">
+          <label
+            htmlFor={`particular-${row.id}`}
+            className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5"
+          >
+            Particulars
+          </label>
+          <input
+            id={`particular-${row.id}`}
+            type="text"
+            value={row.particular}
+            onChange={(e) => onChange(row.id, "particular", e.target.value)}
+            disabled={disableSubmit}
+            placeholder="Item description"
+            className="w-full rounded-lg border-gray-300 bg-gray-50 focus:bg-white px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500 transition-colors dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+          />
+        </div>
 
-      <div className="md:col-span-1">
-        <label
-          htmlFor={`book-${row.id}`}
-          className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
-        >
-          Copies
-        </label>
-        <input
-          id={`book-${row.id}`}
-          type="number"
-          min="0"
-          value={row.book}
-          onChange={(e) => onChange(row.id, "book", e.target.value)}
-          disabled={disableSubmit}
-          placeholder="0"
-          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
-        />
-      </div>
+        <div className="md:col-span-2">
+          <label
+            htmlFor={`book-${row.id}`}
+            className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5"
+          >
+            Qty
+          </label>
+          <input
+            id={`book-${row.id}`}
+            type="number"
+            min="0"
+            value={row.book}
+            onChange={(e) => onChange(row.id, "book", e.target.value)}
+            disabled={disableSubmit}
+            placeholder="0"
+            className="w-full rounded-lg border-gray-300 bg-gray-50 focus:bg-white px-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500 transition-colors dark:bg-gray-700 dark:border-gray-600"
+          />
+        </div>
 
-      <div className="md:col-span-1">
-        <label
-          htmlFor={`rate-${row.id}`}
-          className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
-        >
-          Rate
-        </label>
-        <input
-          id={`rate-${row.id}`}
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          min="0"
-          value={row.rate}
-          onChange={(e) => onChange(row.id, "rate", e.target.value)}
-          disabled={disableSubmit}
-          placeholder="0.00"
-          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
-        />
-      </div>
-
-      <div className="md:col-span-1 flex flex-col items-end md:items-center gap-2">
-        <div className="text-sm text-gray-600 dark:text-gray-300">
-          Amount
-          <div className="font-medium text-gray-800 dark:text-gray-100">
-            {(safeFloat(row.book) * safeFloat(row.rate)).toFixed(2)}
+        <div className="md:col-span-2">
+          <label
+            htmlFor={`rate-${row.id}`}
+            className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5"
+          >
+            Rate
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-400 sm:text-sm">₹</span>
+            </div>
+            <input
+              id={`rate-${row.id}`}
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={row.rate}
+              onChange={(e) => onChange(row.id, "rate", e.target.value)}
+              disabled={disableSubmit}
+              placeholder="0.00"
+              className="w-full rounded-lg border-gray-300 bg-gray-50 focus:bg-white pl-7 pr-4 py-2.5 text-sm focus:border-orange-500 focus:ring-orange-500 transition-colors dark:bg-gray-700 dark:border-gray-600"
+            />
           </div>
         </div>
 
-        <button
-          onClick={(e) => { e.preventDefault(); onRemove(row.id); }}
-          disabled={disableRemove || disableSubmit}
-          className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-md text-sm font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-300"
-          title="Remove entry"
-          aria-disabled={disableRemove || disableSubmit}
-        >
-          <span className="hidden md:inline">Remove</span>
-          <span className="md:hidden text-red-600">Remove</span>
-        </button>
+        <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-4 pb-1">
+          <div className="text-right">
+            <div className="text-xs text-gray-400 mb-1">Amount</div>
+            <div className="font-bold text-gray-800 dark:text-gray-100 text-lg">
+              ₹{(safeFloat(row.book) * safeFloat(row.rate)).toFixed(2)}
+            </div>
+          </div>
+
+          <button
+            onClick={(e) => { e.preventDefault(); onRemove(row.id); }}
+            disabled={disableRemove || disableSubmit}
+            className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Remove item"
+          >
+            <TrashIcon className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -214,7 +240,6 @@ const OrderForm = () => {
     [name, phone, gst, code, address, rows]
   );
 
-// ...existing code...
   const fillForm = React.useCallback(async () => {
     const formPdfBytes = await fetch(formUrl).then((res) => res.arrayBuffer());
     const pdfDoc = await PDFDocument.load(formPdfBytes);
@@ -577,7 +602,6 @@ const OrderForm = () => {
     link.download = `${orderId}_GSTin_Invoice.pdf`;
     link.click();
   }, [queryData, orderId]);
-// ...existing code...
 
   const newOrder = React.useCallback((e) => {
     e && e.preventDefault();
@@ -588,20 +612,32 @@ const OrderForm = () => {
   let statusDiv = null;
   if (status === "success") {
     statusDiv = (
-      <div className="p-4 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm">
-        <strong className="font-semibold">Success:</strong> Order created #{orderId}. Click New Order or Download invoice.
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 shadow-sm animate-fade-in">
+        <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0" />
+        <div>
+          <strong className="font-bold block">Order Created Successfully!</strong>
+          <span className="text-sm opacity-90">Order ID #{orderId}. You can now download the invoice or start a new order.</span>
+        </div>
       </div>
     );
   } else if (status === "warn") {
     statusDiv = (
-      <div className="p-4 rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
-        <strong className="font-semibold">Warning:</strong> Issue creating order, contact support.
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-50 border border-yellow-200 text-yellow-800 shadow-sm animate-fade-in">
+        <ExclamationTriangleIcon className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+        <div>
+          <strong className="font-bold block">Attention Needed</strong>
+          <span className="text-sm opacity-90">There was an issue creating the order. Please check the details and try again.</span>
+        </div>
       </div>
     );
   } else if (status === "error") {
     statusDiv = (
-      <div className="p-4 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm">
-        <strong className="font-semibold">Error:</strong> Server error, try again later.
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 shadow-sm animate-fade-in">
+        <XCircleIcon className="w-6 h-6 text-red-600 flex-shrink-0" />
+        <div>
+          <strong className="font-bold block">System Error</strong>
+          <span className="text-sm opacity-90">Something went wrong on our end. Please try again later.</span>
+        </div>
       </div>
     );
   }
@@ -609,134 +645,199 @@ const OrderForm = () => {
   if (!login) return <Navigate to="/" replace />;
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <h1 className="text-2xl font-extrabold text-orange-600">Order Form</h1>
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-600 dark:text-gray-300 text-right">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-8">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-orange-100 rounded-xl text-orange-600">
+              <ShoppingBagIcon className="w-8 h-8" />
+            </div>
             <div>
-              Total: <span className="font-semibold text-orange-600">₹ {liveTotals.total}</span>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">New Order</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Create a new invoice for your customer</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-700/50 px-5 py-3 rounded-xl border border-gray-100 dark:border-gray-600">
+            <div className="text-right">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</div>
+              <div className="text-2xl font-extrabold text-orange-600 flex items-center gap-1">
+                <CurrencyRupeeIcon className="w-5 h-5" />
+                {liveTotals.total}
+              </div>
             </div>
           </div>
         </div>
-      </header>
 
-      <form onSubmit={handleSubmit} className="space-y-4 bg-orange-50/20 p-6 rounded-lg border border-orange-100">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Name</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              disabled={disableSubmit}
-              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
-            />
+        <form onSubmit={handleSubmit} className="space-y-8">
+          
+          {/* Customer Details Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center gap-2">
+              <UserIcon className="w-5 h-5 text-gray-400" />
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Customer Details</h2>
+            </div>
+            
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <UserIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={disableSubmit}
+                    placeholder="Enter customer name"
+                    className="block w-full pl-10 rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 transition-shadow dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mobile Number</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <PhoneIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    pattern="\d{10}"
+                    disabled={disableSubmit}
+                    placeholder="10-digit mobile number"
+                    className="block w-full pl-10 rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 transition-shadow dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">GST Number</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <IdentificationIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    value={gst}
+                    onChange={(e) => setGst(e.target.value)}
+                    required
+                    disabled={disableSubmit}
+                    placeholder="GSTIN"
+                    className="block w-full pl-10 rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 transition-shadow dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">State Code</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <BuildingLibraryIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    required
+                    disabled={disableSubmit}
+                    placeholder="e.g. 33"
+                    className="block w-full pl-10 rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 transition-shadow dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Billing Address</label>
+                <div className="relative">
+                  <div className="absolute top-3 left-3 pointer-events-none">
+                    <MapPinIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <textarea
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                    rows={3}
+                    disabled={disableSubmit}
+                    placeholder="Enter full billing address"
+                    className="block w-full pl-10 rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 transition-shadow dark:bg-gray-700 dark:border-gray-600 resize-none"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Mobile</label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              pattern="\d{10}"
-              disabled={disableSubmit}
-              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
-            />
-          </div>
+          {/* Items Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Order Items</h2>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{rows.length} items</span>
+            </div>
+            
+            <div className="space-y-3">
+              {rows.map((r, i) => (
+                <ItemRow
+                  key={r.id}
+                  row={r}
+                  index={i}
+                  onChange={updateRow}
+                  onRemove={removeRow}
+                  disableRemove={rows.length <= 1}
+                  disableSubmit={disableSubmit}
+                />
+              ))}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Party GST</label>
-            <input
-              value={gst}
-              onChange={(e) => setGst(e.target.value)}
-              required
-              disabled={disableSubmit}
-              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">State Code</label>
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-              disabled={disableSubmit}
-              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Address</label>
-            <input
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              required
-              disabled={disableSubmit}
-              className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {rows.map((r) => (
-            <ItemRow
-              key={r.id}
-              row={r}
-              onChange={updateRow}
-              onRemove={removeRow}
-              disableRemove={rows.length <= 1}
-              disableSubmit={disableSubmit}
-            />
-          ))}
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-2">
             <button
               onClick={addRow}
               disabled={disableSubmit || rows.length >= 9}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white border border-orange-300 text-orange-600 font-medium hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:opacity-50"
+              className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              + Add item
+              <PlusIcon className="w-5 h-5" />
+              Add Another Item
             </button>
-
-            {!disableSubmit && (
-              <button
-                type="submit"
-                className="inline-flex items-center px-5 py-2 rounded-md bg-orange-600 text-white font-semibold hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
-              >
-                Submit Order
-              </button>
-            )}
           </div>
 
-          <div className="flex items-center gap-3">
-            {disableSubmit && (
-              <>
-                <button onClick={newOrder} className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-300">
-                  New Order
+          {/* Actions & Status */}
+          <div className="space-y-6">
+            {statusDiv}
+
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {!disableSubmit ? (
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <CheckCircleIcon className="w-5 h-5" />
+                  Submit Order
                 </button>
-
-                <button onClick={fillForm} className="px-3 py-2 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-300">
-                  Download Invoice
-                </button>
-              </>
-            )}
+              ) : (
+                <>
+                  <button
+                    onClick={newOrder}
+                    className="w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:text-gray-900 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ArrowPathIcon className="w-5 h-5" />
+                    Start New Order
+                  </button>
+                  
+                  <button
+                    onClick={fillForm}
+                    className="w-full sm:w-auto px-8 py-3 bg-gray-900 text-white rounded-xl font-bold shadow-lg hover:bg-gray-800 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <DocumentArrowDownIcon className="w-5 h-5" />
+                    Download Invoice
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-3 rounded-md bg-white dark:bg-gray-800 border border-orange-100">
-            <div className="text-sm text-gray-500">Total Amount</div>
-            <div className="text-xl font-semibold text-orange-600">₹ {disableSubmit ? totalAmount : liveTotals.total}</div>
-          </div>
-        </div>
-
-        <div>{statusDiv}</div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
